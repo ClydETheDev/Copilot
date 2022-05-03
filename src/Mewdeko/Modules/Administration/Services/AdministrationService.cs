@@ -1,8 +1,15 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
+using Mewdeko.Common;
 using Mewdeko.Common.Collections;
+using Mewdeko.Common.Replacements;
+using Mewdeko.Database;
+using Mewdeko.Database.Extensions;
+using Mewdeko.Database.Models;
+using Mewdeko.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Administration.Services;
 
@@ -10,21 +17,20 @@ public class AdministrationService : INService
 {
     private readonly DbService _db;
     private readonly LogCommandService _logService;
-    private readonly GuildSettingsService _guildSettings;
+    private readonly Mewdeko _bot;
 
-    public AdministrationService(DiscordSocketClient client, CommandHandler cmdHandler, DbService db,
-        LogCommandService logService,
-        GuildSettingsService guildSettings, EventHandler handler)
+    public AdministrationService(Mewdeko bot, CommandHandler cmdHandler, DbService db,
+        LogCommandService logService)
     {
         using var uow = db.GetDbContext();
-        var gc = uow.GuildConfigs.All().Where(x => client.Guilds.Select(x => x.Id).Contains(x.GuildId));
+        var gc = uow.GuildConfigs.All().Where(x => bot.GetCurrentGuildIds().Contains(x.GuildId));
+        _bot = bot;
         _db = db;
         _logService = logService;
-        _guildSettings = guildSettings;
 
         DeleteMessagesOnCommand = new ConcurrentHashSet<ulong>(gc
-                                                               .Where(g => g.DeleteMessageOnCommand)
-                                                               .Select(g => g.GuildId));
+            .Where(g => g.DeleteMessageOnCommand)
+            .Select(g => g.GuildId));
 
         DeleteMessagesOnCommandChannels = new ConcurrentDictionary<ulong, bool>(gc
             .SelectMany(x => x.DelMsgOnCmdChannels)
@@ -33,37 +39,37 @@ public class AdministrationService : INService
         cmdHandler.CommandExecuted += DelMsgOnCmd_Handler;
     }
     
-
-
     public ConcurrentHashSet<ulong> DeleteMessagesOnCommand { get; }
     public ConcurrentDictionary<ulong, bool> DeleteMessagesOnCommandChannels { get; }
+    
+    
 
     public async Task StaffRoleSet(IGuild guild, ulong role)
     {
         await using var uow = _db.GetDbContext();
-        var gc = await uow.ForGuildId(guild.Id, set => set);
+        var gc = uow.ForGuildId(guild.Id, set => set);
         gc.StaffRole = role;
-        await uow.SaveChangesAsync().ConfigureAwait(false);
-        _guildSettings.UpdateGuildConfig(guild.Id, gc);
+        await uow.SaveChangesAsync().ConfigureAwait(false);;
+        _bot.UpdateGuildConfig(guild.Id, gc);
     }
 
     public async Task MemberRoleSet(IGuild guild, ulong role)
     {
         await using var uow = _db.GetDbContext();
-        var gc = await uow.ForGuildId(guild.Id, set => set);
+        var gc = uow.ForGuildId(guild.Id, set => set);
         gc.MemberRole = role;
         await uow.SaveChangesAsync().ConfigureAwait(false);
-        _guildSettings.UpdateGuildConfig(guild.Id, gc);
+        _bot.UpdateGuildConfig(guild.Id, gc);
     }
 
-    public async Task<ulong> GetStaffRole(ulong id) => (await _guildSettings.GetGuildConfig(id)).StaffRole;
+    public ulong GetStaffRole(ulong id) => _bot.GetGuildConfig(id).StaffRole;
 
-    public async Task<ulong> GetMemberRole(ulong id) => (await _guildSettings.GetGuildConfig(id)).MemberRole;
+    public ulong GetMemberRole(ulong id) => _bot.GetGuildConfig(id).MemberRole;
 
-    public async Task<(bool DelMsgOnCmd, IEnumerable<DelMsgOnCmdChannel> channels)> GetDelMsgOnCmdData(ulong guildId)
+    public (bool DelMsgOnCmd, IEnumerable<DelMsgOnCmdChannel> channels) GetDelMsgOnCmdData(ulong guildId)
     {
-        await using var uow = _db.GetDbContext();
-        var conf = await uow.ForGuildId(guildId,
+        using var uow = _db.GetDbContext();
+        var conf = uow.ForGuildId(guildId,
             set => set.Include(x => x.DelMsgOnCmdChannels));
 
         return (conf.DeleteMessageOnCommand, conf.DelMsgOnCmdChannels);
@@ -71,7 +77,7 @@ public class AdministrationService : INService
 
     private Task DelMsgOnCmd_Handler(IUserMessage msg, CommandInfo cmd)
     {
-        _ = Task.Run(async () =>
+        var _ = Task.Run(async () =>
         {
             if (msg.Channel is SocketTextChannel channel)
             {
@@ -111,23 +117,23 @@ public class AdministrationService : INService
         return Task.CompletedTask;
     }
 
-    public async Task<bool> ToggleDeleteMessageOnCommand(ulong guildId)
+    public bool ToggleDeleteMessageOnCommand(ulong guildId)
     {
-        await using var uow = _db.GetDbContext();
-        var conf = await uow.ForGuildId(guildId, set => set);
-        var enabled = conf.DeleteMessageOnCommand = !conf.DeleteMessageOnCommand;
-        _guildSettings.UpdateGuildConfig(guildId, conf);
-        await uow.SaveChangesAsync().ConfigureAwait(false);
+        bool enabled;
+        using var uow = _db.GetDbContext();
+        var conf = uow.ForGuildId(guildId, set => set);
+        enabled = conf.DeleteMessageOnCommand = !conf.DeleteMessageOnCommand;
+        _bot.UpdateGuildConfig(guildId, conf);
+        uow.SaveChanges();
 
         return enabled;
     }
 
     public async Task SetDelMsgOnCmdState(ulong guildId, ulong chId, Administration.State newState)
     {
-        var uow = _db.GetDbContext();
-        await using (uow.ConfigureAwait(false))
+        await using (var uow = _db.GetDbContext())
         {
-            var conf = await uow.ForGuildId(guildId,
+            var conf = uow.ForGuildId(guildId,
                 set => set.Include(x => x.DelMsgOnCmdChannels));
 
             var old = conf.DelMsgOnCmdChannels.FirstOrDefault(x => x.ChannelId == chId);
@@ -169,10 +175,9 @@ public class AdministrationService : INService
 
     public static async Task DeafenUsers(bool value, params IGuildUser[] users)
     {
-        if (users.Length == 0)
+        if (!users.Any())
             return;
         foreach (var u in users)
-        {
             try
             {
                 await u.ModifyAsync(usr => usr.Deaf = value).ConfigureAwait(false);
@@ -181,27 +186,25 @@ public class AdministrationService : INService
             {
                 // ignored
             }
-        }
     }
 
-    public static async Task EditMessage(ICommandContext context, ITextChannel chanl, ulong messageId, string? text)
+    public static async Task EditMessage(ICommandContext context, ITextChannel chanl, ulong messageId, string text)
     {
-        var msg = await chanl.GetMessageAsync(messageId).ConfigureAwait(false);
+        var msg = await chanl.GetMessageAsync(messageId);
 
         if (msg is not IUserMessage umsg || msg.Author.Id != context.Client.CurrentUser.Id)
             return;
 
         var rep = new ReplacementBuilder()
-                  .WithDefault(context)
-                  .Build();
+            .WithDefault(context)
+            .Build();
 
-        if (SmartEmbed.TryParse(rep.Replace(text), context.Guild?.Id, out var embed, out var plainText, out var components))
+        if (SmartEmbed.TryParse(rep.Replace(text), out var embed, out var plainText))
         {
             await umsg.ModifyAsync(x =>
             {
-                x.Embeds = embed;
+                x.Embed = embed?.Build();
                 x.Content = plainText?.SanitizeMentions();
-                x.Components = components.Build();
             }).ConfigureAwait(false);
         }
         else
@@ -210,7 +213,6 @@ public class AdministrationService : INService
             {
                 x.Content = text.SanitizeMentions();
                 x.Embed = null;
-                x.Components = null;
             }).ConfigureAwait(false);
         }
     }
