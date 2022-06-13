@@ -191,8 +191,8 @@ public class AdministrationService : INService
             return;
 
         var rep = new ReplacementBuilder()
-            .WithDefault(context)
-            .Build();
+                  .WithDefault(context)
+                  .Build();
 
         if (SmartEmbed.TryParse(rep.Replace(text), context.Guild?.Id, out var embed, out var plainText, out var components))
         {
