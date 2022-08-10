@@ -40,8 +40,9 @@ public class RoleCommandsService : INService
 
                 if (!_models.TryGetValue(gch.Guild.Id, out var confs))
                     return;
-                
-                await msg.DownloadAsync().ConfigureAwait(false);
+
+                if (!msg.HasValue)
+                    await msg.DownloadAsync();
 
                 var conf = confs.FirstOrDefault(x => x.MessageId == msg.Id);
 
@@ -126,7 +127,7 @@ public class RoleCommandsService : INService
 
                 if (!_models.TryGetValue(gch.Guild.Id, out var confs))
                     return;
-                var message = await msg.GetOrDownloadAsync().ConfigureAwait(false);
+                var message = msg.HasValue ? msg.Value : await msg.GetOrDownloadAsync();
                 var conf = confs.FirstOrDefault(x => x.MessageId == message.Id);
 
                 if (conf == null)

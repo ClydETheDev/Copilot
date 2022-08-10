@@ -72,7 +72,7 @@ public class Mewdeko
 
     public static Color OkColor { get; set; }
     public static Color ErrorColor { get; set; }
-    private int ShardReadyCount = 0;
+    private int ShardConnectedCount = 1;
 
     public TaskCompletionSource<bool> Ready { get; } = new();
 
@@ -90,7 +90,8 @@ public class Mewdeko
         
 
         using var uow = _db.GetDbContext();
-        foreach (var config in (IEnumerable<GuildConfig>)uow.GuildConfigs.All().Where(x => Client.Guilds.Select(socketguild => socketguild.Id).Contains(x.GuildId)))
+        var configs = uow.GuildConfigs.All().Where(x => Client.Guilds.Select(socketguild => socketguild.Id).Contains(x.GuildId));
+        foreach (var config in configs)
         {
             _guildSettingsService.UpdateGuildConfig(config.GuildId, config);
         }
@@ -229,22 +230,58 @@ public class Mewdeko
             Helpers.ReadErrorAndExit(4);
         }
         Log.Information("Loading services...");
-        try
-        {
-            AddServices();
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "Error adding services");
-            Helpers.ReadErrorAndExit(9);
-        }
         Client.JoinedGuild += Client_JoinedGuild;
         Client.LeftGuild += Client_LeftGuild;
+        Client.ShardConnected += ClientOnShardReady;
         Log.Information("Bot logged in.");
 
 #if !DEBUG
         Client.Log -= Client_Log;
 #endif
+    }
+
+    private Task ClientOnShardReady(DiscordSocketClient arg)
+    {
+        if (ShardConnectedCount == Client.Shards.Count)
+        {
+            _ = Task.Run(async () =>
+            {
+                AddServices();
+                var commandService = Services.GetService<CommandService>();
+                var interactionService = Services.GetRequiredService<InteractionService>();
+                await commandService.AddModulesAsync(GetType().GetTypeInfo().Assembly, Services).ConfigureAwait(false);
+                await interactionService.AddModulesAsync(GetType().GetTypeInfo().Assembly, Services).ConfigureAwait(false);
+                _ = Task.Run(async () =>
+                {
+                    var lava = Services.GetRequiredService<LavalinkNode>();
+                    try
+                    {
+                        await lava.InitializeAsync().ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        Log.Information("Unable to connect to lavalink. If you want music please launch tha lavalink binary separately.");
+                    }
+                });
+#if !DEBUG
+        if (Client.ShardId == 0)
+            await interactionService.RegisterCommandsGloballyAsync().ConfigureAwait(false);
+#endif
+#if DEBUG
+                if (Client.Guilds.Select(x => x.Id).Contains(Credentials.DebugGuildId))
+                    await interactionService.RegisterCommandsToGuildAsync(Credentials.DebugGuildId);
+#endif
+
+
+                _ = Task.Run(HandleStatusChanges);
+                _ = Task.Run(ExecuteReadySubscriptions);
+                Ready.TrySetResult(true);
+                Log.Information("Bot ready");
+            });
+        }
+        else
+            ShardConnectedCount++;
+        return Task.CompletedTask;
     }
 
     private Task Client_LeftGuild(SocketGuild arg)
@@ -311,42 +348,10 @@ public class Mewdeko
     {
         var sw = Stopwatch.StartNew();
 
-        LoginAsync(Credentials.Token).Wait();
+        await LoginAsync(Credentials.Token);
 
         sw.Stop();
         Log.Information("Bot connected in {Elapsed:F2}s", sw.Elapsed.TotalSeconds);
-        var commandService = Services.GetService<CommandService>();
-        var interactionService = Services.GetRequiredService<InteractionService>();
-        await commandService.AddModulesAsync(GetType().GetTypeInfo().Assembly, Services)
-                             .ConfigureAwait(false);
-        await interactionService.AddModulesAsync(GetType().GetTypeInfo().Assembly, Services)
-            .ConfigureAwait(false);
-        _ = Task.Run(async () =>
-        {
-            var lava = Services.GetRequiredService<LavalinkNode>();
-            try
-            {
-                await lava.InitializeAsync().ConfigureAwait(false);
-            }
-            catch
-            {
-                Log.Information("Unable to connect to lavalink. If you want music please launch tha lavalink binary separately.");
-            }
-        });
-#if  !DEBUG
-        if (Client.ShardId == 0)
-            await interactionService.RegisterCommandsGloballyAsync().ConfigureAwait(false);
-#endif
-#if DEBUG
-        if (Client.Guilds.Select(x => x.Id).Contains(Credentials.DebugGuildId))
-            await interactionService.RegisterCommandsToGuildAsync(Credentials.DebugGuildId);
-#endif
-        
-
-        _ = Task.Run(HandleStatusChanges);
-        _ = Task.Run(ExecuteReadySubscriptions);
-        Ready.TrySetResult(true);
-        Log.Information("Bot ready");
     }
 
     private Task ExecuteReadySubscriptions()

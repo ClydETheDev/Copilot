@@ -22,7 +22,7 @@ public class RoleGreetService : INService
 
     private async Task DoRoleGreet(Cacheable<SocketGuildUser, ulong> cacheable, SocketGuildUser socketGuildUser)
     {
-        var user = await cacheable.GetOrDownloadAsync().ConfigureAwait(false);
+        var user = cacheable.HasValue ? cacheable.Value : await cacheable.DownloadAsync();
         if (user.Roles.SequenceEqual(socketGuildUser.Roles))
         {
             if (user.Roles.Count > socketGuildUser.Roles.Count)

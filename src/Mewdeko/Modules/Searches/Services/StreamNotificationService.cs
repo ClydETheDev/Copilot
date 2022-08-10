@@ -60,48 +60,46 @@ public class StreamNotificationService : IReadyExecutor, INService
         _streamFollowKey = new TypedKey<FollowStreamPubData>("stream.follow");
         _streamUnfollowKey = new TypedKey<FollowStreamPubData>("stream.unfollow");
 
-        using (var uow = db.GetDbContext())
-        {
-            var ids = client.GetGuildIds();
-            var guildConfigs = uow.Set<GuildConfig>()
-                                  .AsQueryable()
-                                  .Include(x => x.FollowedStreams)
-                                  .Where(x => ids.Contains(x.GuildId))
-                                  .ToList();
+        using var uow = db.GetDbContext();
+        var ids = client.GetGuildIds();
+        var guildConfigs = uow.Set<GuildConfig>()
+                              .AsQueryable()
+                              .Include(x => x.FollowedStreams)
+                              .Where(x => ids.Contains(x.GuildId))
+                              .ToList();
 
-            _offlineNotificationServers = new ConcurrentHashSet<ulong>(guildConfigs
-                                                                       .Where(gc => gc.NotifyStreamOffline)
-                                                                       .Select(x => x.GuildId)
-                                                                       .ToList());
+        _offlineNotificationServers = new ConcurrentHashSet<ulong>(guildConfigs
+                                                                   .Where(gc => gc.NotifyStreamOffline)
+                                                                   .Select(x => x.GuildId)
+                                                                   .ToList());
 
-            var followedStreams = guildConfigs.SelectMany(x => x.FollowedStreams).ToList();
+        var followedStreams = guildConfigs.SelectMany(x => x.FollowedStreams).ToList();
 
-            _shardTrackedStreams = followedStreams.GroupBy(x => new
-            {
-                x.Type,
-                Name = x.Username.ToLower()
-            })
-                                                  .ToList()
-                                                  .ToDictionary(
-                                                      x => new StreamDataKey(x.Key.Type, x.Key.Name.ToLower()),
-                                                      x => x.GroupBy(y => y.GuildId)
-                                                            .ToDictionary(y => y.Key,
-                                                                y => y.AsEnumerable().ToHashSet()));
+        _shardTrackedStreams = followedStreams.GroupBy(x => new
+                                              {
+                                                  x.Type,
+                                                  Name = x.Username.ToLower()
+                                              })
+                                              .ToList()
+                                              .ToDictionary(
+                                                  x => new StreamDataKey(x.Key.Type, x.Key.Name.ToLower()),
+                                                  x => x.GroupBy(y => y.GuildId)
+                                                        .ToDictionary(y => y.Key,
+                                                            y => y.AsEnumerable().ToHashSet()));
 
-            // shard 0 will keep track of when there are no more guilds which track a strea
-            var allFollowedStreams = uow.Set<FollowedStream>().AsQueryable().ToList();
+        // shard 0 will keep track of when there are no more guilds which track a strea
+        var allFollowedStreams = uow.Set<FollowedStream>().AsQueryable().ToList();
 
-                foreach (var fs in allFollowedStreams)
-                    _streamTracker.CacheAddData(fs.CreateKey(), null, false);
+        foreach (var fs in allFollowedStreams)
+            _streamTracker.CacheAddData(fs.CreateKey(), null, false);
 
-                _trackCounter = allFollowedStreams.GroupBy(x => new
-                {
-                    x.Type,
-                    Name = x.Username.ToLower()
-                })
-                                                  .ToDictionary(x => new StreamDataKey(x.Key.Type, x.Key.Name),
-                                                      x => x.Select(fs => fs.GuildId).ToHashSet());
-        }
+        _trackCounter = allFollowedStreams.GroupBy(x => new
+                                          {
+                                              x.Type,
+                                              Name = x.Username.ToLower()
+                                          })
+                                          .ToDictionary(x => new StreamDataKey(x.Key.Type, x.Key.Name),
+                                              x => x.Select(fs => fs.GuildId).ToHashSet());
 
         _pubSub.Sub(_streamsOfflineKey, HandleStreamsOffline);
         _pubSub.Sub(_streamsOnlineKey, HandleStreamsOnline);
@@ -119,50 +117,46 @@ public class StreamNotificationService : IReadyExecutor, INService
         client.LeftGuild += ClientOnLeftGuild;
     }
 
-    public async Task OnReadyAsync()
+    public Task OnReadyAsync()
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(30));
-        while (await timer.WaitForNextTickAsync().ConfigureAwait(false))
+        _ = Task.Run(async () =>
         {
-            try
+            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(30));
+            while (await timer.WaitForNextTickAsync().ConfigureAwait(false))
             {
-                var errorLimit = TimeSpan.FromHours(12);
-                var failingStreams = _streamTracker.GetFailingStreams(errorLimit, true).ToList();
-
-                if (failingStreams.Count == 0)
-                    continue;
-
-                var deleteGroups = failingStreams.GroupBy(x => x.Type)
-                                                 .ToDictionary(x => x.Key, x => x.Select(y => y.Name).ToList());
-
-                var uow = _db.GetDbContext();
-                await using var _ = uow.ConfigureAwait(false);
-                foreach (var kvp in deleteGroups)
+                try
                 {
-                    Log.Information(
-                        "Deleting {StreamCount} {Platform} streams because they've been erroring for more than {ErrorLimit}: {RemovedList}",
-                        kvp.Value.Count,
-                        kvp.Key,
-                        errorLimit,
-                        string.Join(", ", kvp.Value));
+                    var errorLimit = TimeSpan.FromHours(12);
+                    var failingStreams = _streamTracker.GetFailingStreams(errorLimit, true).ToList();
 
-                    var toDelete = uow.Set<FollowedStream>()
-                                      .AsQueryable()
-                                      .Where(x => x.Type == kvp.Key && kvp.Value.Contains(x.Username))
-                                      .ToList();
+                    if (failingStreams.Count == 0)
+                        continue;
 
-                    uow.RemoveRange(toDelete);
-                    await uow.SaveChangesAsync().ConfigureAwait(false);
+                    var deleteGroups = failingStreams.GroupBy(x => x.Type).ToDictionary(x => x.Key, x => x.Select(y => y.Name).ToList());
 
-                    foreach (var loginToDelete in kvp.Value)
-                        _streamTracker.UntrackStreamByKey(new StreamDataKey(kvp.Key, loginToDelete));
+                    var uow = _db.GetDbContext();
+                    await using var _ = uow.ConfigureAwait(false);
+                    foreach (var kvp in deleteGroups)
+                    {
+                        Log.Information("Deleting {StreamCount} {Platform} streams because they've been erroring for more than {ErrorLimit}: {RemovedList}", kvp.Value.Count,
+                            kvp.Key, errorLimit, string.Join(", ", kvp.Value));
+
+                        var toDelete = uow.Set<FollowedStream>().AsQueryable().Where(x => x.Type == kvp.Key && kvp.Value.Contains(x.Username)).ToList();
+
+                        uow.RemoveRange(toDelete);
+                        await uow.SaveChangesAsync().ConfigureAwait(false);
+
+                        foreach (var loginToDelete in kvp.Value)
+                            _streamTracker.UntrackStreamByKey(new StreamDataKey(kvp.Key, loginToDelete));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error cleaning up FollowedStreams");
                 }
             }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "Error cleaning up FollowedStreams");
-            }
-        }
+        });
+        return Task.CompletedTask;
     }
 
     /// <summary>
