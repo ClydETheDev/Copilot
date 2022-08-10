@@ -264,7 +264,6 @@ public class Mewdeko
                     }
                 });
 #if !DEBUG
-        if (Client.ShardId == 0)
             await interactionService.RegisterCommandsGloballyAsync().ConfigureAwait(false);
 #endif
 #if DEBUG
