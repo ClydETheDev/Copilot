@@ -16,19 +16,22 @@ public class ConverterService : INService, IUnloadableService
     private readonly IHttpClientFactory _httpFactory;
     private readonly TimeSpan _updateInterval = new(12, 0, 0);
 
-    public ConverterService(DiscordShardedClient client,
+    public ConverterService(
         IDataCache cache, IHttpClientFactory factory)
     {
         _cache = cache;
         _httpFactory = factory;
-        
-            _currencyUpdater = new Timer(
-                async shouldLoad => await UpdateCurrency((bool)shouldLoad).ConfigureAwait(false),
-                null,
-                TimeSpan.Zero,
-                _updateInterval);
+        _ = CurrencyLoop();
     }
 
+    public async Task CurrencyLoop()
+    {
+        var timer = new PeriodicTimer(_updateInterval);
+        while (await timer.WaitForNextTickAsync())
+        {
+            await UpdateCurrency(true);
+        }
+    }
     public ConvertUnit[] Units =>
         _cache.Redis.GetDatabase()
             .StringGet("converter_units")

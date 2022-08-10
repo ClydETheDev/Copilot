@@ -90,11 +90,11 @@ public class Mewdeko
         
 
         using var uow = _db.GetDbContext();
-        var bot = Client.CurrentUser;
         foreach (var config in (IEnumerable<GuildConfig>)uow.GuildConfigs.All().Where(x => Client.Guilds.Select(socketguild => socketguild.Id).Contains(x.GuildId)))
         {
             _guildSettingsService.UpdateGuildConfig(config.GuildId, config);
         }
+        var bot = Client.CurrentUser;
         uow.EnsureUserCreated(bot.Id, bot.Username, bot.Discriminator, bot.AvatarId);
         gs2.Stop();
         Log.Information($"Guild Configs cached in {gs2.Elapsed.TotalSeconds:F2}s.");
