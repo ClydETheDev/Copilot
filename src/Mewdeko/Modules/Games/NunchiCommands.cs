@@ -11,9 +11,9 @@ public partial class Games
     [Group]
     public class NunchiCommands : MewdekoSubmodule<GamesService>
     {
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
 
-        public NunchiCommands(DiscordSocketClient client) => _client = client;
+        public NunchiCommands(DiscordShardedClient client) => _client = client;
 
         [Cmd, Aliases, RequireContext(ContextType.Guild)]
         public async Task Nunchi()

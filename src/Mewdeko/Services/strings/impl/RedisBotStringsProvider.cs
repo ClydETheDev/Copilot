@@ -13,15 +13,13 @@ public class RedisBotStringsProvider : IBotStringsProvider
     private readonly ConnectionMultiplexer _redis;
     private readonly IStringsSource _source;
 
-    public RedisBotStringsProvider(ConnectionMultiplexer redis, DiscordSocketClient discordClient,
+    public RedisBotStringsProvider(ConnectionMultiplexer redis,
         IStringsSource source, IBotCredentials creds)
     {
         _redis = redis;
         _source = source;
         _creds = creds;
-
-        if (discordClient.ShardId == 0)
-            Reload();
+        Reload();
     }
 
     public string GetText(string localeName, string? key) => _redis.GetDatabase().HashGet($"{_creds.RedisKey()}:responses:{localeName}", key);

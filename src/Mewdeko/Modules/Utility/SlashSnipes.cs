@@ -14,11 +14,11 @@ public partial class Utility
     [Group("snipe", "Snipe edited or delete messages!")]
     public class SlashSnipes : MewdekoSlashModuleBase<UtilityService>
     {
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly InteractiveService _interactivity;
         private readonly GuildSettingsService _guildSettings;
 
-        public SlashSnipes(DiscordSocketClient client, InteractiveService interactiveService, GuildSettingsService guildSettings)
+        public SlashSnipes(DiscordShardedClient client, InteractiveService interactiveService, GuildSettingsService guildSettings)
         {
             _client = client;
             _interactivity = interactiveService;

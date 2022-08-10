@@ -12,28 +12,26 @@ namespace Mewdeko.Services.Impl;
 
 public class StatsService : IStatsService
 {
-    public DiscordSocketClient Client { get; }
+    public DiscordShardedClient Client { get; }
     public IHttpClientFactory Factory { get; }
     public IBotCredentials Creds { get; }
-    public ICoordinator Coord { get; }
     private readonly HttpClient _http;
     public const string BOT_VERSION = "7.00";
 
     private readonly DateTime _started;
 
     public StatsService(
-        DiscordSocketClient client, IHttpClientFactory factory, IBotCredentials creds, ICoordinator coord, CommandService cmdServ,
+        DiscordShardedClient client, IHttpClientFactory factory, IBotCredentials creds, CommandService cmdServ,
         HttpClient http)
     {
         Client = client;
         Factory = factory;
         Creds = creds;
-        Coord = coord;
         _http = http;
         _ = new DllVersionChecker();
         _started = DateTime.UtcNow;
         _ = PostToTopGg();
-        _ = PostToStatcord(coord, client, cmdServ);
+        _ = PostToStatcord(client, cmdServ);
     }
 
     public string Library => $"Discord.Net {DllVersionChecker.GetDllVersion()} ";
@@ -49,7 +47,7 @@ public class StatsService : IStatsService
         return $"{time.Days} days{separator}{time.Hours} hours{separator}{time.Minutes} minutes";
     }
 
-    public async Task PostToStatcord(ICoordinator coord, DiscordSocketClient socketClient, CommandService cmdServ)
+    public async Task PostToStatcord(DiscordShardedClient socketClient, CommandService cmdServ)
     {
         if (string.IsNullOrWhiteSpace(Creds.StatcordKey))
             return;
@@ -57,7 +55,7 @@ public class StatsService : IStatsService
         while (await timer.WaitForNextTickAsync().ConfigureAwait(false))
         {
             using var content = new StringContent(
-                $"{{\n  \"id\": \"{socketClient.CurrentUser.Id}\",\n  \"key\": \"{Creds.StatcordKey}\",\n  \"servers\": \"{coord.GetGuildCount()}\",\n  \"users\": \"{coord.GetUserCount()}\",\n  \"active\":[],\n  \"commands\": \"0\",\n  \"popular\": \"[]\",\n  \"memactive\": \"{ByteSize.FromBytes(Process.GetCurrentProcess().PrivateMemorySize64).Bytes}\",\n  \"memload\": \"0\",\n  \"cpuload\": \"0\",\n  \"bandwidth\": \"0\", \n\"custom1\":  \"{cmdServ.Commands.Count()}\"}}");
+                $"{{\n  \"id\": \"{socketClient.CurrentUser.Id}\",\n  \"key\": \"{Creds.StatcordKey}\",\n  \"servers\": \"{socketClient.Guilds.Count}\",\n  \"users\": \"{socketClient.Guilds.SelectMany(x => x.Users).GroupBy(x => x.Id).Distinct().Count()}\",\n  \"active\":[],\n  \"commands\": \"0\",\n  \"popular\": \"[]\",\n  \"memactive\": \"{ByteSize.FromBytes(Process.GetCurrentProcess().PrivateMemorySize64).Bytes}\",\n  \"memload\": \"0\",\n  \"cpuload\": \"0\",\n  \"bandwidth\": \"0\", \n\"custom1\":  \"{cmdServ.Commands.Count()}\"}}");
             content.Headers.Clear();
             content.Headers.Add("Content-Type", "application/json");
             await _http.PostAsync("https://api.statcord.com/beta/stats", content).ConfigureAwait(false);
@@ -79,9 +77,9 @@ public class StatsService : IStatsService
                 using var content = new FormUrlEncodedContent(
                     new Dictionary<string, string>
                     {
-                        {"shard_count", Creds.TotalShards.ToString()},
-                        {"shard_id", Client.ShardId.ToString()},
-                        {"server_count", Coord.GetGuildCount().ToString()}
+                        {"shard_count", Client.Shards.Count.ToString()},
+                        {"shard_id", "0"},
+                        {"server_count", Client.Guilds.Count.ToString()}
                     });
                 content.Headers.Clear();
                 content.Headers.Add("Content-Type", "application/x-www-form-urlencoded");

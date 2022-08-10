@@ -9,7 +9,7 @@ namespace Mewdeko.Common.TypeReaders;
 /// </summary>
 public class PermissionActionTypeReader : MewdekoTypeReader<PermissionAction>
 {
-    public PermissionActionTypeReader(DiscordSocketClient client, CommandService cmds) : base(client, cmds)
+    public PermissionActionTypeReader(DiscordShardedClient client, CommandService cmds) : base(client, cmds)
     {
     }
 

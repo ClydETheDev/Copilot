@@ -8,11 +8,11 @@ namespace Mewdeko.Modules.Giveaways.Services;
 
 public class GiveawayService : INService, IReadyExecutor
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly IBotCredentials _creds;
     private readonly DbService _db;
     private readonly GuildSettingsService _guildSettings;
-    public GiveawayService(DiscordSocketClient client, DbService db, IBotCredentials creds,
+    public GiveawayService(DiscordShardedClient client, DbService db, IBotCredentials creds,
         GuildSettingsService guildSettings)
     {
         _client = client;
@@ -96,7 +96,7 @@ public class GiveawayService : INService, IReadyExecutor
         using var uow = _db.GetDbContext();
         return uow.Giveaways
             .FromSqlInterpolated(
-                $"select * from giveaways where ((serverid >> 22) % {_creds.TotalShards}) == {_client.ShardId} and \"when\" < {now} and \"Ended\" == 0;")
+                $"select * from giveaways where \"when\" < {now} and \"Ended\" == 0;")
             .ToListAsync();
     }
 

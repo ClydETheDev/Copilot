@@ -13,7 +13,7 @@ public class SuggestionsService : INService
 {
     private readonly DbService _db;
     private readonly PermissionService _perms;
-    public readonly DiscordSocketClient Client;
+    public readonly DiscordShardedClient Client;
     public readonly AdministrationService Adminserv;
     private readonly List<ulong> _repostChecking;
     private readonly List<ulong> _spamCheck;
@@ -21,7 +21,7 @@ public class SuggestionsService : INService
 
     public SuggestionsService(
         DbService db,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         AdministrationService aserv,
         PermissionService permserv,
         GuildSettingsService guildSettings, EventHandler eventHandler)
@@ -934,7 +934,7 @@ public class SuggestionsService : INService
 
     public async Task SendDenyEmbed(
         IGuild guild,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         IUser user,
         ulong suggestion,
         ITextChannel channel,
@@ -1262,7 +1262,7 @@ public class SuggestionsService : INService
 
     public async Task SendConsiderEmbed(
         IGuild guild,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         IUser user,
         ulong suggestion,
         ITextChannel channel,
@@ -1589,7 +1589,7 @@ public class SuggestionsService : INService
 
     public async Task SendImplementEmbed(
         IGuild guild,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         IUser user,
         ulong suggestion,
         ITextChannel channel,
@@ -1917,7 +1917,7 @@ public class SuggestionsService : INService
 
     public async Task SendAcceptEmbed(
         IGuild guild,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         IUser user,
         ulong suggestion,
         ITextChannel channel,
@@ -2247,7 +2247,7 @@ public class SuggestionsService : INService
     public async Task SendSuggestion(
         IGuild guild,
         IGuildUser user,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         string suggestion,
         ITextChannel channel,
         IDiscordInteraction? interaction = null)

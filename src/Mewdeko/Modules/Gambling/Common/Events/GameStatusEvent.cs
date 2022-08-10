@@ -11,7 +11,7 @@ public class GameStatusEvent : ICurrencyEvent
     private readonly long _amount;
     private readonly ConcurrentHashSet<ulong> _awardedUsers = new();
     private readonly ITextChannel _channel;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
 
     private readonly string _code;
     private readonly ICurrencyService _cs;
@@ -37,7 +37,7 @@ public class GameStatusEvent : ICurrencyEvent
     private readonly object _stopLock = new();
     private IUserMessage? msg;
 
-    public GameStatusEvent(DiscordSocketClient client, ICurrencyService cs, SocketGuild g, ITextChannel ch,
+    public GameStatusEvent(DiscordShardedClient client, ICurrencyService cs, SocketGuild g, ITextChannel ch,
         EventOptions opt, Func<CurrencyEvent.Type, EventOptions, long, EmbedBuilder> embedFunc,
         EventHandler eventHandler)
     {

@@ -7,7 +7,7 @@ namespace Mewdeko.Common.TypeReaders;
 
 public class GuildDateTimeTypeReader : MewdekoTypeReader<GuildDateTime>
 {
-    public GuildDateTimeTypeReader(DiscordSocketClient client, CommandService cmds) : base(client, cmds)
+    public GuildDateTimeTypeReader(DiscordShardedClient client, CommandService cmds) : base(client, cmds)
     {
     }
 

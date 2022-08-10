@@ -12,9 +12,9 @@ public partial class Games
     [Group]
     public class AcropobiaCommands : MewdekoSubmodule<GamesService>
     {
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
 
-        public AcropobiaCommands(DiscordSocketClient client) => _client = client;
+        public AcropobiaCommands(DiscordShardedClient client) => _client = client;
 
         [Cmd, Aliases, RequireContext(ContextType.Guild),
          MewdekoOptions(typeof(AcrophobiaGame.Options))]

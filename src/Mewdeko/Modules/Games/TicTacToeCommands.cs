@@ -12,10 +12,10 @@ public partial class Games
     [Group]
     public class TicTacToeCommands : MewdekoSubmodule<GamesService>
     {
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly SemaphoreSlim _sem = new(1, 1);
 
-        public TicTacToeCommands(DiscordSocketClient client) => _client = client;
+        public TicTacToeCommands(DiscordShardedClient client) => _client = client;
 
         [Cmd, Aliases, RequireContext(ContextType.Guild),
          MewdekoOptions(typeof(TicTacToe.Options))]

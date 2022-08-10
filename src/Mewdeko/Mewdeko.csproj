@@ -46,12 +46,6 @@
         <PackageReference Include="Google.Apis.Urlshortener.v1" Version="1.41.1.138" />
         <PackageReference Include="Google.Apis.YouTube.v3" Version="1.57.0.2750" />
         <PackageReference Include="Google.Apis.Customsearch.v1" Version="1.49.0.2084" />
-        <PackageReference Include="Google.Protobuf" Version="3.21.3" />
-        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.47.0" />
-        <PackageReference Include="Grpc.Tools" Version="2.48.0-pre1">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
         <PackageReference Include="Lavalink4NET.Discord.NET" Version="3.0.0-preview.10" />
         <PackageReference Include="linq2db.EntityFrameworkCore" Version="6.8.0" />
         <PackageReference Include="MartineApiNet" Version="1.0.14" />
@@ -100,9 +94,6 @@
         <PackageReference Include="YamlDotNet" Version="11.2.1" />
     </ItemGroup>
     <ItemGroup>
-        <Protobuf Include="..\Mewdeko.Coordinator\Protos\coordinator.proto" GrpcServices="Client">
-            <Link>Protos\coordinator.proto</Link>
-        </Protobuf>
         <Compile Remove="credentials.json" />
         <None Include="..\..\.editorconfig" Link=".editorconfig" />
         <None Update="data\**\*">

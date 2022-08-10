@@ -12,9 +12,9 @@ namespace Mewdeko.Modules.Afk;
 public class SlashAfk : MewdekoSlashModuleBase<AfkService>
 {
     private readonly InteractiveService _interactivity;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
 
-    public SlashAfk(InteractiveService serv, DiscordSocketClient client)
+    public SlashAfk(InteractiveService serv, DiscordShardedClient client)
     {
         _interactivity = serv;
         _client = client;
@@ -23,7 +23,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("set", "Set your afk with an optional message"), RequireContext(ContextType.Guild), CheckPermissions]
     public async Task Afk(string? message = null)
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -83,7 +83,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
      SlashUserPerm(GuildPermission.Administrator), CheckPermissions]
     public async Task CustomAfkMessage(string embedCode)
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -101,7 +101,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("listactive", "Sends a list of active afk users"), CheckPermissions]
     public async Task GetActiveAfks()
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -136,7 +136,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("view", "View another user's afk message"), SlashUserPerm(GuildPermission.ManageMessages), CheckPermissions]
     public async Task AfkView(IGuildUser user)
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -154,7 +154,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("disabledlist", "Shows a list of channels where afk messages are not allowed to display"), SlashUserPerm(GuildPermission.ManageChannels), CheckPermissions]
     public async Task AfkDisabledList()
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -196,7 +196,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("maxlength", "Sets the maximum length of afk messages."), SlashUserPerm(GuildPermission.Administrator), CheckPermissions]
     public async Task AfkLength(int num)
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -216,7 +216,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("type", "Sets how afk messages are removed. Do @Mewdeko help afktype to see more."), SlashUserPerm(GuildPermission.Administrator), CheckPermissions]
     public async Task AfkType(string ehm)
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -248,7 +248,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("timeout", "Sets after how long mewdeko no longer ignores a user's typing/messages."), SlashUserPerm(GuildPermission.Administrator), CheckPermissions]
     public async Task AfkTimeout(string input)
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -273,7 +273,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("undisable", "Allows afk messages to be shown in a channel again."), SlashUserPerm(GuildPermission.ManageChannels), CheckPermissions]
     public async Task AfkUndisable(ITextChannel channel)
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -320,7 +320,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("disable", "Disables afk messages to be shown in channels you specify."), SlashUserPerm(GuildPermission.ManageChannels), CheckPermissions]
     public async Task AfkDisable(ITextChannel channel)
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;
@@ -376,7 +376,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
     [SlashCommand("remove", "Removes afk from a user"), SlashUserPerm(GuildPermission.ManageMessages), CheckPermissions]
     public async Task AfkRemove(IGuildUser user)
     {
-        if (Environment.GetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}") != "1")
+        if (Environment.GetEnvironmentVariable("AFK_CACHED") != "1")
         {
             await ctx.Interaction.SendErrorAsync("Hold your horses I just started back up! Give me a few seconds then this command will be ready!\nIn the meantime check out https://mewdeko.tech/changelog for bot updates!").ConfigureAwait(false);
             return;

@@ -16,7 +16,7 @@ public class GlobalPermissionService : ILateBlocker, INService
     public HashSet<string> BlockedModules => _bss.Data.Blocked.Modules;
     public int Priority { get; } = 0;
 
-    public Task<bool> TryBlockLate(DiscordSocketClient client, ICommandContext ctx, string moduleName,
+    public Task<bool> TryBlockLate(DiscordShardedClient client, ICommandContext ctx, string moduleName,
         CommandInfo command)
     {
         var settings = _bss.Data;
@@ -31,7 +31,7 @@ public class GlobalPermissionService : ILateBlocker, INService
 
         return Task.FromResult(false);
     }
-    public Task<bool> TryBlockLate(DiscordSocketClient client, IInteractionContext ctx,
+    public Task<bool> TryBlockLate(DiscordShardedClient client, IInteractionContext ctx,
         ICommandInfo command)
     {
         var settings = _bss.Data;

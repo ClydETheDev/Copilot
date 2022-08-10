@@ -14,7 +14,7 @@ namespace Mewdeko.Modules.Gambling.Services;
 public class GamblingService : INService
 {
     private readonly IDataCache _cache;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ICurrencyService _cs;
     private readonly DbService _db;
     private readonly IBotCredentials _creds;
@@ -23,7 +23,7 @@ public class GamblingService : INService
     private readonly GamblingConfigService _gss;
 
     public GamblingService(DbService db, Mewdeko bot, ICurrencyService cs,
-        DiscordSocketClient client, IDataCache cache, GamblingConfigService gss,
+        DiscordShardedClient client, IDataCache cache, GamblingConfigService gss,
         IBotCredentials creds,
         HttpClient httpClient)
     {
@@ -34,9 +34,7 @@ public class GamblingService : INService
         _gss = gss;
         _creds = creds;
         _httpClient = httpClient;
-
-        if (bot.Client.ShardId == 0)
-        {
+        
             _ = new Timer(_ =>
             {
                 var config = _gss.Data;
@@ -72,7 +70,6 @@ WHERE CurrencyAmount > {config.Decay.MinThreshold} AND UserId!={_client.CurrentU
                 _cache.SetLastCurrencyDecay();
                 uow.SaveChanges();
             }, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
-        }
     }
 
     public ConcurrentDictionary<(ulong, ulong), RollDuelGame> Duels { get; } = new();

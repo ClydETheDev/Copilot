@@ -28,7 +28,7 @@ public class CommandHandler : INService
     private const float ONE_THOUSANDTH = 1.0f / 1000;
     private readonly Mewdeko _bot;
     private readonly BotConfigService _bss;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly CommandService _commandService;
     private readonly DbService _db;
     private readonly IServiceProvider _services;
@@ -46,7 +46,7 @@ public class CommandHandler : INService
     public ConcurrentDictionary<ulong, ConcurrentQueue<IUserMessage>> CommandParseQueue { get; } = new();
     public ConcurrentDictionary<ulong, bool> CommandParseLock { get; } = new();
 
-    public CommandHandler(DiscordSocketClient client, DbService db, CommandService commandService,
+    public CommandHandler(DiscordShardedClient client, DbService db, CommandService commandService,
         BotConfigService bss, Mewdeko bot, IServiceProvider services, IBotStrings strngs,
         InteractionService interactionService,
         GuildSettingsService gss, EventHandler eventHandler)
@@ -308,7 +308,7 @@ public class CommandHandler : INService
             //     && compInter.Message.Author.IsWebhook
             //     && !compInter.Data.CustomId.StartsWith("trigger.")) return;
 
-            var ctx = new SocketInteractionContext(_client, interaction);
+            var ctx = new ShardedInteractionContext(_client, interaction);
             await InteractionService.ExecuteCommandAsync(ctx, _services).ConfigureAwait(false);
     }
 

@@ -7,7 +7,7 @@ namespace Mewdeko.Modules.Gambling.Services;
 
 public class CurrencyEventsService : INService
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GamblingConfigService _configService;
     private readonly ICurrencyService _cs;
     private readonly EventHandler _eventHandler;
@@ -15,7 +15,7 @@ public class CurrencyEventsService : INService
     private readonly ConcurrentDictionary<ulong, ICurrencyEvent> _events =
         new();
 
-    public CurrencyEventsService(DiscordSocketClient client, ICurrencyService cs, GamblingConfigService configService,
+    public CurrencyEventsService(DiscordShardedClient client, ICurrencyService cs, GamblingConfigService configService,
         EventHandler eventHandler)
     {
         _client = client;

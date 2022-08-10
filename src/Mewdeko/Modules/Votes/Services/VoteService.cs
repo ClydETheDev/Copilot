@@ -10,10 +10,10 @@ namespace Mewdeko.Modules.VotesCommands.Services;
 public class VoteService : INService
 {
     private readonly DbService _db;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly MuteService _muteService;
 
-    public VoteService(IPubSub pubSub, DbService db, DiscordSocketClient client,
+    public VoteService(IPubSub pubSub, DbService db, DiscordShardedClient client,
         MuteService muteService)
     {
         _db = db;

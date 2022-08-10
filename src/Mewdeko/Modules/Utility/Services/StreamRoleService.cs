@@ -15,7 +15,7 @@ public class StreamRoleService : INService, IUnloadableService
     private readonly DbService _db;
     private readonly ConcurrentDictionary<ulong, StreamRoleSettings> _guildSettings;
 
-    public StreamRoleService(DiscordSocketClient client, DbService db, EventHandler eventHandler)
+    public StreamRoleService(DiscordShardedClient client, DbService db, EventHandler eventHandler)
     {
         _db = db;
         this.eventHandler = eventHandler;

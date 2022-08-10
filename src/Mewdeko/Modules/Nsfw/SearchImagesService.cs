@@ -31,7 +31,7 @@ public class SearchImagesService : ISearchImagesService, INService
 
     public SearchImagesService(
         IHttpClientFactory http,
-        SearchImageCacher cacher, DiscordSocketClient client,
+        SearchImageCacher cacher, DiscordShardedClient client,
         DbService db)
     {
         _rng = new MewdekoRandom();

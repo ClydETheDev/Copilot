@@ -9,7 +9,7 @@ public class EmoteArrayTypeConverter : MewdekoTypeReader<IEmote[]>
 {
     private IBotStrings Strings { get; set; }
 
-    public EmoteArrayTypeConverter(DiscordSocketClient client, InteractionService cmds, IBotStrings strings) : base(client, cmds) => Strings = strings;
+    public EmoteArrayTypeConverter(DiscordShardedClient client, InteractionService cmds, IBotStrings strings) : base(client, cmds) => Strings = strings;
 
     public override bool CanConvertTo(Type type) => type.IsArray && type.GetElementType() == typeof(IEmote);
 

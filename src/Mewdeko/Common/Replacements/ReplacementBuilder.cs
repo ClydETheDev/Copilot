@@ -11,30 +11,30 @@ public class ReplacementBuilder
     private static readonly Regex _rngRegex =
         new("%rng(?:(?<from>(?:-)?\\d+)-(?<to>(?:-)?\\d+))?%", RegexOptions.Compiled);
 
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly NekosBestApi _nekosBestApi;
 
     private readonly ConcurrentDictionary<Regex, Func<Match, string>> _regex = new();
     private readonly ConcurrentDictionary<string, Func<string?>> _reps = new();
     
 
-    public ReplacementBuilder(DiscordSocketClient? client = null)
+    public ReplacementBuilder(DiscordShardedClient? client = null)
     {
         _nekosBestApi = new NekosBestApi();
         _client = client;
         WithRngRegex();
     }
 
-    public ReplacementBuilder WithDefault(IUser usr, IMessageChannel ch, SocketGuild g, DiscordSocketClient client) =>
+    public ReplacementBuilder WithDefault(IUser usr, IMessageChannel ch, SocketGuild g, DiscordShardedClient client) =>
         WithUser(usr)
             .WithChannel(ch)
             .WithServer(client, g)
             .WithClient(client)
             .WithGifs();
 
-    public ReplacementBuilder WithDefault(ICommandContext ctx) => WithDefault(ctx.User, ctx.Channel, ctx.Guild as SocketGuild, (DiscordSocketClient)ctx.Client);
+    public ReplacementBuilder WithDefault(ICommandContext ctx) => WithDefault(ctx.User, ctx.Channel, ctx.Guild as SocketGuild, (DiscordShardedClient)ctx.Client);
 
-    public ReplacementBuilder WithMention(DiscordSocketClient client)
+    public ReplacementBuilder WithMention(DiscordShardedClient client)
     {
         /*OBSOLETE*/
         _reps.TryAdd("%mention%", () => $"<@{client.CurrentUser.Id}>");
@@ -43,12 +43,11 @@ public class ReplacementBuilder
         return this;
     }
 
-    public ReplacementBuilder WithClient(DiscordSocketClient client)
+    public ReplacementBuilder WithClient(DiscordShardedClient client)
     {
         WithMention(client);
 
         /*OBSOLETE*/
-        _reps.TryAdd("%shardid%", () => client.ShardId.ToString());
         _reps.TryAdd("%time%",
             () => DateTime.Now.ToString($"HH:mm {TimeZoneInfo.Local.StandardName.GetInitials()}"));
 
@@ -67,7 +66,7 @@ public class ReplacementBuilder
         return this;
     }
 
-    public ReplacementBuilder WithServer(DiscordSocketClient client, SocketGuild? g)
+    public ReplacementBuilder WithServer(DiscordShardedClient client, SocketGuild? g)
     {
         /*OBSOLETE*/
         _reps.TryAdd("%sid%", () => g == null ? "DM" : g.Id.ToString());
@@ -268,7 +267,7 @@ public class ReplacementBuilder
         return this;
     }
 
-    private void WithStats(DiscordSocketClient c)
+    private void WithStats(DiscordShardedClient c)
     {
         /*OBSOLETE*/
         _reps.TryAdd("%servers%", () => c.Guilds.Count.ToString());
@@ -281,7 +280,6 @@ public class ReplacementBuilder
 #if !GLOBAL_Mewdeko
         _reps.TryAdd("%shard.usercount%", () => c.Guilds.Sum(s => s.Users.Count).ToString());
 #endif
-        _reps.TryAdd("%shard.id%", () => c.ShardId.ToString());
     }
 
     public ReplacementBuilder WithRngRegex()

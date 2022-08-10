@@ -8,7 +8,7 @@ namespace Mewdeko.Common.TypeReaders;
 
 public class CommandTypeReader : MewdekoTypeReader<CommandInfo>
 {
-    public CommandTypeReader(DiscordSocketClient client, CommandService cmds) : base(client, cmds)
+    public CommandTypeReader(DiscordShardedClient client, CommandService cmds) : base(client, cmds)
     {
     }
 
@@ -32,10 +32,10 @@ public class CommandTypeReader : MewdekoTypeReader<CommandInfo>
 
 public class CommandOrCrTypeReader : MewdekoTypeReader<CommandOrCrInfo>
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly CommandService _cmds;
 
-    public CommandOrCrTypeReader(DiscordSocketClient client, CommandService cmds) : base(client, cmds)
+    public CommandOrCrTypeReader(DiscordShardedClient client, CommandService cmds) : base(client, cmds)
     {
         _client = client;
         _cmds = cmds;

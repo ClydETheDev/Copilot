@@ -13,7 +13,7 @@ public sealed class BlacklistService : IEarlyBehavior, INService
     private readonly TypedKey<BlacklistEntry[]> _blPubKey = new("blacklist.reload");
     public IList<BlacklistEntry> BlacklistEntries;
 
-    public BlacklistService(DbService db, IPubSub pubSub, DiscordSocketClient client)
+    public BlacklistService(DbService db, IPubSub pubSub, DiscordShardedClient client)
     {
         _db = db;
         _pubSub = pubSub;
@@ -65,7 +65,7 @@ public sealed class BlacklistService : IEarlyBehavior, INService
 
     public ModuleBehaviorType BehaviorType => ModuleBehaviorType.Blocker;
 
-    public Task<bool> RunBehavior(DiscordSocketClient _, IGuild guild, IUserMessage usrMsg)
+    public Task<bool> RunBehavior(DiscordShardedClient _, IGuild guild, IUserMessage usrMsg)
     {
         foreach (var bl in BlacklistEntries)
         {

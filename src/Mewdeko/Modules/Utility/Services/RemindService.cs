@@ -7,7 +7,7 @@ namespace Mewdeko.Modules.Utility.Services;
 
 public class RemindService : INService
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly IBotCredentials _creds;
     private readonly DbService _db;
 
@@ -17,7 +17,7 @@ public class RemindService : INService
             ,
             RegexOptions.Compiled | RegexOptions.Multiline);
 
-    public RemindService(DiscordSocketClient client, DbService db, IBotCredentials creds)
+    public RemindService(DiscordShardedClient client, DbService db, IBotCredentials creds)
     {
         _client = client;
         _db = db;
@@ -72,7 +72,7 @@ public class RemindService : INService
         using var uow = _db.GetDbContext();
         return uow.Reminders
             .FromSqlInterpolated(
-                $"select * from reminders where ((serverid >> 22) % {_creds.TotalShards}) == {_client.ShardId} and \"when\" < {now};")
+                $"select * from reminders where \"when\" < {now};")
             .ToListAsync();
     }
 

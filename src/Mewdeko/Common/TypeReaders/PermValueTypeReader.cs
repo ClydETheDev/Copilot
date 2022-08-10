@@ -8,7 +8,7 @@ namespace Mewdeko.Common.TypeReaders;
 /// </summary>
 public class PermValue : MewdekoTypeReader<PermValue>
 {
-    public PermValue(DiscordSocketClient client, CommandService cmds) : base(client, cmds)
+    public PermValue(DiscordShardedClient client, CommandService cmds) : base(client, cmds)
     {
     }
 

@@ -9,14 +9,14 @@ namespace Mewdeko.Modules.Games.Common;
 public class TypingGame
 {
     public const float WORD_VALUE = 4.5f;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GamesService _games;
     private readonly Options _options;
     private readonly string? _prefix;
     private readonly List<ulong> _finishedUserIds;
     private readonly Stopwatch _sw;
 
-    public TypingGame(GamesService games, DiscordSocketClient client, ITextChannel channel,
+    public TypingGame(GamesService games, DiscordShardedClient client, ITextChannel channel,
         string? prefix, Options options)
     {
         _games = games;

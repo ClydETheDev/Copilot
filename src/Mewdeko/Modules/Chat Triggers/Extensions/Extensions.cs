@@ -40,10 +40,10 @@ public static class Extensions
         }
     };
 
-    private static string ResolveTriggerString(this string str, DiscordSocketClient client) => str.Replace("%bot.mention%", client.CurrentUser.Mention, StringComparison.Ordinal);
+    private static string ResolveTriggerString(this string str, DiscordShardedClient client) => str.Replace("%bot.mention%", client.CurrentUser.Mention, StringComparison.Ordinal);
 
     private static async Task<string?> ResolveResponseStringAsync(this string? str, IUserMessage ctx,
-        DiscordSocketClient client, string resolvedTrigger, bool containsAnywhere)
+        DiscordShardedClient client, string resolvedTrigger, bool containsAnywhere)
     {
         var substringIndex = resolvedTrigger.Length;
         if (containsAnywhere)
@@ -81,12 +81,12 @@ public static class Extensions
     }
 
     public static Task<string?> ResponseWithContextAsync(this Database.Models.ChatTriggers cr, IUserMessage ctx,
-        DiscordSocketClient client, bool containsAnywhere) =>
+        DiscordShardedClient client, bool containsAnywhere) =>
         cr.Response.ResolveResponseStringAsync(ctx, client, cr.Trigger.ResolveTriggerString(client),
             containsAnywhere);
 
     public static async Task<IUserMessage> Send(this Database.Models.ChatTriggers ct, IUserMessage ctx,
-        DiscordSocketClient client, bool sanitize)
+        DiscordShardedClient client, bool sanitize)
     {
         var channel = ct.DmResponse
             ? await ctx.Author.CreateDMChannelAsync().ConfigureAwait(false)
@@ -158,7 +158,7 @@ public static class Extensions
     }
     
     public static async Task<IUserMessage> SendInteraction(this Database.Models.ChatTriggers ct, SocketInteraction inter,
-        DiscordSocketClient client, bool sanitize, IUserMessage fakeMsg, bool ephemeral = false)
+        DiscordShardedClient client, bool sanitize, IUserMessage fakeMsg, bool ephemeral = false)
     {
 
         if (SmartEmbed.TryParse(ct.Response, ct.GuildId, out var crembed, out var plainText, out var components))

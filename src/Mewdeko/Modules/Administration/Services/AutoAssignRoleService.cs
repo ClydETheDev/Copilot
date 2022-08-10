@@ -19,7 +19,7 @@ public sealed class AutoAssignRoleService : INService
     private readonly DbService _db;
     private readonly GuildSettingsService _guildSettings;
 
-    public AutoAssignRoleService(DiscordSocketClient client, DbService db,
+    public AutoAssignRoleService(DiscordShardedClient client, DbService db,
         GuildSettingsService guildSettings, EventHandler eventHandler)
     {
         _db = db;

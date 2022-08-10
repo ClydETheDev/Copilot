@@ -5,9 +5,9 @@ namespace Mewdeko.Modules.RoleGreets.Services;
 public class RoleGreetService : INService
 {
     private readonly DbService _db;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
 
-    public RoleGreetService(DbService db, DiscordSocketClient client, EventHandler eventHandler)
+    public RoleGreetService(DbService db, DiscordShardedClient client, EventHandler eventHandler)
     {
         _client = client;
         _db = db;

@@ -10,7 +10,7 @@ public class CommandMapService : IInputTransformer, INService
     private readonly DbService _db;
 
     //commandmap
-    public CommandMapService(DiscordSocketClient client, DbService db)
+    public CommandMapService(DiscordShardedClient client, DbService db)
     {
         using var uow = db.GetDbContext();
         var guildIds = client.Guilds.Select(x => x.Id).ToList();

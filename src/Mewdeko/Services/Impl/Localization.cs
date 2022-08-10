@@ -15,7 +15,7 @@ public class Localization : ILocalization
     private readonly BotConfigService _bss;
     private readonly DbService _db;
 
-    public Localization(BotConfigService bss, DiscordSocketClient client, DbService db)
+    public Localization(BotConfigService bss, DiscordShardedClient client, DbService db)
     {
         _bss = bss;
         _db = db;

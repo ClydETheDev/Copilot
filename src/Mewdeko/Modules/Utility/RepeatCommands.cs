@@ -15,10 +15,10 @@ public partial class Utility
     [Group]
     public class RepeatCommands : MewdekoSubmodule<MessageRepeaterService>
     {
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly DbService _db;
 
-        public RepeatCommands(DiscordSocketClient client, DbService db)
+        public RepeatCommands(DiscordShardedClient client, DbService db)
         {
             _client = client;
             _db = db;

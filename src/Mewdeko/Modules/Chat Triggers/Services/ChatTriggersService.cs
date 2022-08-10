@@ -62,7 +62,7 @@ public sealed class ChatTriggersService : IEarlyBehavior, INService, IReadyExecu
         .Build();
 
     private readonly Mewdeko _bot;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly CmdCdService _cmdCds;
     private readonly TypedKey<bool> _crsReloadedKey = new("crs.reloaded");
 
@@ -95,7 +95,7 @@ public sealed class ChatTriggersService : IEarlyBehavior, INService, IReadyExecu
         DbService db,
         IBotStrings strings,
         Mewdeko bot,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         GlobalPermissionService gperm,
         CmdCdService cmdCds,
         IPubSub pubSub,
@@ -126,7 +126,7 @@ public sealed class ChatTriggersService : IEarlyBehavior, INService, IReadyExecu
     public int Priority => -1;
     public ModuleBehaviorType BehaviorType => ModuleBehaviorType.Executor;
 
-    public async Task<bool> RunBehavior(DiscordSocketClient client, IGuild guild, IUserMessage msg)
+    public async Task<bool> RunBehavior(DiscordShardedClient client, IGuild guild, IUserMessage msg)
     {
         // maybe this message is a custom reaction
         var ct = TryGetChatTriggers(msg);
@@ -249,7 +249,7 @@ public sealed class ChatTriggersService : IEarlyBehavior, INService, IReadyExecu
         return false;
     }
 
-    public async Task<bool> RunInteractionTrigger(DiscordSocketClient client, SocketInteraction inter, CTModel ct)
+    public async Task<bool> RunInteractionTrigger(DiscordShardedClient client, SocketInteraction inter, CTModel ct)
     {
         switch (inter)
         {

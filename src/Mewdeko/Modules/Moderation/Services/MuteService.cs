@@ -27,12 +27,12 @@ public class MuteService : INService
         new(addReactions: PermValue.Deny, sendMessages: PermValue.Deny,
             attachFiles: PermValue.Deny, sendMessagesInThreads: PermValue.Deny, createPublicThreads: PermValue.Deny);
 
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly DbService _db;
     public string[] Uroles = Array.Empty<string>();
     private readonly GuildSettingsService _guildSettings;
 
-    public MuteService(DiscordSocketClient client, DbService db, GuildSettingsService guildSettings, EventHandler eventHandler)
+    public MuteService(DiscordShardedClient client, DbService db, GuildSettingsService guildSettings, EventHandler eventHandler)
     {
         _client = client;
         _db = db;

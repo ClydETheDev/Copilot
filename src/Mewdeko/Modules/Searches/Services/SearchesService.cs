@@ -60,7 +60,7 @@ public class SearchesService : INService, IUnloadableService
     private readonly object _yomamaLock = new();
     private int yomamaJokeIndex;
 
-    public SearchesService(DiscordSocketClient client, IGoogleApiService google,
+    public SearchesService(DiscordShardedClient client, IGoogleApiService google,
         DbService db, IDataCache cache, IHttpClientFactory factory,
         FontProvider fonts, IBotCredentials creds)
     {

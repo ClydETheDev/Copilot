@@ -6,7 +6,7 @@ namespace Mewdeko.Common.TypeReaders;
 
 public class StoopidTimeTypeReader : MewdekoTypeReader<StoopidTime>
 {
-    public StoopidTimeTypeReader(DiscordSocketClient client, CommandService cmds) : base(client, cmds)
+    public StoopidTimeTypeReader(DiscordShardedClient client, CommandService cmds) : base(client, cmds)
     {
     }
 

@@ -435,7 +435,7 @@ public partial class Moderation : MewdekoModule
                 return;
 
             var guildUser =
-                await ((DiscordSocketClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id, user.Id).ConfigureAwait(false);
+                await ((DiscordShardedClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id, user.Id).ConfigureAwait(false);
 
             if (guildUser != null && !await CheckRoleHierarchy(guildUser).ConfigureAwait(false))
                 return;
@@ -487,7 +487,7 @@ public partial class Moderation : MewdekoModule
                 return;
 
             var guildUser =
-                await ((DiscordSocketClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id, user.Id).ConfigureAwait(false);
+                await ((DiscordShardedClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id, user.Id).ConfigureAwait(false);
 
             if (guildUser != null && !await CheckRoleHierarchy(guildUser).ConfigureAwait(false))
                 return;
@@ -532,7 +532,7 @@ public partial class Moderation : MewdekoModule
          UserPerm(GuildPermission.BanMembers), BotPerm(GuildPermission.BanMembers), Priority(0)]
         public async Task Ban(ulong userId, [Remainder] string? msg = null)
         {
-            var user = await ((DiscordSocketClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id,
+            var user = await ((DiscordShardedClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id,
                 userId).ConfigureAwait(false);
             if (user is null)
             {
@@ -753,7 +753,7 @@ public partial class Moderation : MewdekoModule
          UserPerm(GuildPermission.KickMembers | GuildPermission.ManageMessages), BotPerm(GuildPermission.BanMembers)]
         public async Task Softban(ulong userId, [Remainder] string? msg = null)
         {
-            var user = await ((DiscordSocketClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id,
+            var user = await ((DiscordShardedClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id,
                 userId).ConfigureAwait(false);
             if (user is null)
                 return;
@@ -807,7 +807,7 @@ public partial class Moderation : MewdekoModule
          UserPerm(GuildPermission.KickMembers), BotPerm(GuildPermission.KickMembers), Priority(0)]
         public async Task Kick(ulong userId, [Remainder] string? msg = null)
         {
-            var user = await ((DiscordSocketClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id,
+            var user = await ((DiscordShardedClient)Context.Client).Rest.GetGuildUserAsync(Context.Guild.Id,
                 userId).ConfigureAwait(false);
             if (user is null)
                 return;

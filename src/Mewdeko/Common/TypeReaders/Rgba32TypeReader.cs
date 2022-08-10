@@ -6,7 +6,7 @@ namespace Mewdeko.Common.TypeReaders;
 
 public class Rgba32TypeReader : MewdekoTypeReader<Color>
 {
-    public Rgba32TypeReader(DiscordSocketClient client, CommandService cmds) : base(client, cmds)
+    public Rgba32TypeReader(DiscordShardedClient client, CommandService cmds) : base(client, cmds)
     {
     }
 

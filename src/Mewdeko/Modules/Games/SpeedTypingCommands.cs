@@ -11,11 +11,11 @@ public partial class Games
     [Group]
     public class SpeedTypingCommands : MewdekoSubmodule<GamesService>
     {
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly GamesService _games;
         private readonly GuildSettingsService _guildSettings;
 
-        public SpeedTypingCommands(DiscordSocketClient client, GamesService games, GuildSettingsService guildSettings)
+        public SpeedTypingCommands(DiscordShardedClient client, GamesService games, GuildSettingsService guildSettings)
         {
             _games = games;
             _guildSettings = guildSettings;

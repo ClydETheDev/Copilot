@@ -15,11 +15,11 @@ public class UserPunishService : INService
     private readonly BlacklistService _blacklistService;
     private readonly DbService _db;
     private readonly MuteService _mute;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GuildSettingsService _guildSettings;
 
     public UserPunishService(MuteService mute, DbService db, BlacklistService blacklistService,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         GuildSettingsService guildSettings)
     {
         _mute = mute;
@@ -434,7 +434,7 @@ WHERE GuildId={guildId}
     public Task<(Embed[]?, string?, ComponentBuilder?)> GetBanUserDmEmbed(ICommandContext context, IGuildUser target, string? defaultMessage,
         string? banReason, TimeSpan? duration) =>
         GetBanUserDmEmbed(
-            (DiscordSocketClient)context.Client,
+            (DiscordShardedClient)context.Client,
             (SocketGuild)context.Guild,
             (IGuildUser)context.User,
             target,
@@ -442,7 +442,7 @@ WHERE GuildId={guildId}
             banReason,
             duration);
 
-    public Task<(Embed[], string?, ComponentBuilder?)> GetBanUserDmEmbed(DiscordSocketClient client, SocketGuild guild,
+    public Task<(Embed[], string?, ComponentBuilder?)> GetBanUserDmEmbed(DiscordShardedClient client, SocketGuild guild,
         IGuildUser moderator, IGuildUser target, string? defaultMessage, string? banReason, TimeSpan? duration)
     {
         var template = GetBanTemplate(guild.Id);

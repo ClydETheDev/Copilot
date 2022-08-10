@@ -31,7 +31,7 @@ public class LogCommandService : INService
         UserMuted
     }
 
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly DbService _db;
     private readonly ConcurrentHashSet<ulong> _ignoreMessageIds = new();
     private readonly IMemoryCache _memoryCache;
@@ -44,7 +44,7 @@ public class LogCommandService : INService
     public readonly Timer ClearTimer;
 
     public LogCommandService(
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         IBotStrings strings,
         DbService db,
         MuteService mute,

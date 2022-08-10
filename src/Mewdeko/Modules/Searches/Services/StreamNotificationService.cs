@@ -20,7 +20,7 @@ public class StreamNotificationService : IReadyExecutor, INService
     private readonly DbService _db;
     private readonly IBotStrings _strings;
     private readonly Random _rng = new MewdekoRandom();
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly NotifChecker _streamTracker;
 
     private readonly object _shardLock = new();
@@ -40,7 +40,7 @@ public class StreamNotificationService : IReadyExecutor, INService
 
     public StreamNotificationService(
         DbService db,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         IBotStrings strings,
         ConnectionMultiplexer redis,
         IBotCredentials creds,
@@ -52,7 +52,7 @@ public class StreamNotificationService : IReadyExecutor, INService
         _client = client;
         _strings = strings;
         _pubSub = pubSub;
-        _streamTracker = new NotifChecker(httpFactory, creds, redis, creds.RedisKey(), client.ShardId == 0);
+        _streamTracker = new NotifChecker(httpFactory, creds, redis, creds.RedisKey(), true);
 
         _streamsOnlineKey = new TypedKey<List<StreamData>>("streams.online");
         _streamsOfflineKey = new TypedKey<List<StreamData>>("streams.offline");
@@ -88,10 +88,8 @@ public class StreamNotificationService : IReadyExecutor, INService
                                                             .ToDictionary(y => y.Key,
                                                                 y => y.AsEnumerable().ToHashSet()));
 
-            // shard 0 will keep track of when there are no more guilds which track a stream
-            if (client.ShardId == 0)
-            {
-                var allFollowedStreams = uow.Set<FollowedStream>().AsQueryable().ToList();
+            // shard 0 will keep track of when there are no more guilds which track a strea
+            var allFollowedStreams = uow.Set<FollowedStream>().AsQueryable().ToList();
 
                 foreach (var fs in allFollowedStreams)
                     _streamTracker.CacheAddData(fs.CreateKey(), null, false);
@@ -103,14 +101,11 @@ public class StreamNotificationService : IReadyExecutor, INService
                 })
                                                   .ToDictionary(x => new StreamDataKey(x.Key.Type, x.Key.Name),
                                                       x => x.Select(fs => fs.GuildId).ToHashSet());
-            }
         }
 
         _pubSub.Sub(_streamsOfflineKey, HandleStreamsOffline);
         _pubSub.Sub(_streamsOnlineKey, HandleStreamsOnline);
-
-        if (client.ShardId == 0)
-        {
+        
             // only shard 0 will run the tracker,
             // and then publish updates with redis to other shards 
             _streamTracker.OnStreamsOffline += OnStreamsOffline;
@@ -119,17 +114,13 @@ public class StreamNotificationService : IReadyExecutor, INService
 
             _pubSub.Sub(_streamFollowKey, HandleFollowStream);
             _pubSub.Sub(_streamUnfollowKey, HandleUnfollowStream);
-        }
 
-        bot.JoinedGuild += ClientOnJoinedGuild;
+            bot.JoinedGuild += ClientOnJoinedGuild;
         client.LeftGuild += ClientOnLeftGuild;
     }
 
     public async Task OnReadyAsync()
     {
-        if (_client.ShardId != 0)
-            return;
-
         using var timer = new PeriodicTimer(TimeSpan.FromMinutes(30));
         while (await timer.WaitForNextTickAsync().ConfigureAwait(false))
         {

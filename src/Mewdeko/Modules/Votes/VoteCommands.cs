@@ -45,7 +45,7 @@ public class Vote : MewdekoModuleBase<VoteService>
                     else
                     {
                         var rep = new ReplacementBuilder()
-                                  .WithDefault(ctx.User, null, ctx.Guild as SocketGuild, ctx.Client as DiscordSocketClient)
+                                  .WithDefault(ctx.User, null, ctx.Guild as SocketGuild, ctx.Client as DiscordShardedClient)
                                   .WithOverride("%votestotalcount%", () => votes.Count.ToString())
                                   .WithOverride("%votesmonthcount%", () => votes.Count(x => x.DateAdded.Value.Month == DateTime.UtcNow.Month).ToString()).Build();;
             

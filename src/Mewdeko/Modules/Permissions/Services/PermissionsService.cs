@@ -17,7 +17,7 @@ public class PermissionService : ILateBlocker, INService
     private readonly GuildSettingsService _guildSettings;
 
     public PermissionService(
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         DbService db,
         IBotStrings strings,
         GuildSettingsService guildSettings)
@@ -45,7 +45,7 @@ public class PermissionService : ILateBlocker, INService
     public int Priority { get; } = 0;
 
     public async Task<bool> TryBlockLate(
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         ICommandContext ctx,
         string moduleName,
         CommandInfo command)
@@ -137,7 +137,7 @@ public class PermissionService : ILateBlocker, INService
         return false;
     }
 
-    public async Task<bool> TryBlockLate(DiscordSocketClient client, IInteractionContext ctx, ICommandInfo command)
+    public async Task<bool> TryBlockLate(DiscordShardedClient client, IInteractionContext ctx, ICommandInfo command)
     {
         var guild = ctx.Guild;
         var commandName = command.MethodName.ToLowerInvariant();

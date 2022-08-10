@@ -20,22 +20,20 @@ namespace Mewdeko.Modules.Utility;
 public partial class Utility : MewdekoModuleBase<UtilityService>
 {
     private static readonly SemaphoreSlim _sem = new(1, 1);
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly IBotCredentials _creds;
     private readonly IStatsService _stats;
     private readonly DownloadTracker _tracker;
     private readonly InteractiveService _interactivity;
-    private readonly ICoordinator _coordinator;
     private readonly GuildSettingsService _guildSettings;
     private readonly HttpClient _httpClient;
 
     public Utility(
-        DiscordSocketClient client,
-        IStatsService stats, IBotCredentials creds, DownloadTracker tracker, InteractiveService serv, ICoordinator coordinator,
+        DiscordShardedClient client,
+        IStatsService stats, IBotCredentials creds, DownloadTracker tracker, InteractiveService serv,
         GuildSettingsService guildSettings,
         HttpClient httpClient)
     {
-        _coordinator = coordinator;
         _guildSettings = guildSettings;
         _httpClient = httpClient;
         _interactivity = serv;
@@ -880,12 +878,12 @@ public partial class Utility : MewdekoModuleBase<UtilityService>
                                               .WithIsInline(false))
                                        .AddField(efb => efb.WithName("Library").WithValue(_stats.Library).WithIsInline(false))
                                        .AddField(efb =>
-                                           efb.WithName(GetText("shard")).WithValue($"#{_client.ShardId} / {_creds.TotalShards}")
+                                           efb.WithName(GetText("shard")).WithValue($"#{_client.GetShardIdFor(ctx.Guild)} / {_creds.TotalShards}")
                                               .WithIsInline(false))
                                        .AddField(efb => efb.WithName(GetText("memory")).WithValue($"{_stats.Heap} MB").WithIsInline(false))
                                        .AddField(efb =>
                                            efb.WithName(GetText("uptime")).WithValue(_stats.GetUptimeString("\n")).WithIsInline(false))
-                                       .AddField(efb => efb.WithName("Servers").WithValue($"{_coordinator.GetGuildCount()} Servers").WithIsInline(false)))
+                                       .AddField(efb => efb.WithName("Servers").WithValue($"{_client.Guilds.Count} Servers").WithIsInline(false)))
                  .ConfigureAwait(false);
     }
 
@@ -915,7 +913,7 @@ public partial class Utility : MewdekoModuleBase<UtilityService>
 
             await ctx.Channel
                 .SendConfirmAsync(
-                    $"Bot Ping {(int)sw.Elapsed.TotalMilliseconds}ms\nBot Latency {((DiscordSocketClient)ctx.Client).Latency}ms")
+                    $"Bot Ping {(int)sw.Elapsed.TotalMilliseconds}ms\nBot Latency {((DiscordShardedClient)ctx.Client).Latency}ms")
                 .ConfigureAwait(false);
         }
         finally

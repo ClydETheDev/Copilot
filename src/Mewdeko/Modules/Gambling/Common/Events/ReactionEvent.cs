@@ -11,7 +11,7 @@ public class ReactionEvent : ICurrencyEvent
     private readonly long _amount;
     private readonly ConcurrentHashSet<ulong> _awardedUsers = new();
     private readonly ITextChannel _channel;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GamblingConfig _config;
     private readonly ICurrencyService _cs;
 
@@ -31,7 +31,7 @@ public class ReactionEvent : ICurrencyEvent
     private IEmote emote;
     private IUserMessage? msg;
 
-    public ReactionEvent(DiscordSocketClient client, ICurrencyService cs,
+    public ReactionEvent(DiscordShardedClient client, ICurrencyService cs,
         SocketGuild g, ITextChannel ch, EventOptions opt, GamblingConfig config,
         Func<CurrencyEvent.Type, EventOptions, long, EmbedBuilder> embedFunc,
         EventHandler eventHandler)

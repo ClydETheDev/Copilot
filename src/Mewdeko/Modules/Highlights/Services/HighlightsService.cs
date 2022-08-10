@@ -7,11 +7,11 @@ namespace Mewdeko.Modules.Highlights.Services;
 
 public class HighlightsService : INService, IReadyExecutor
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly IDataCache _cache;
     private readonly DbService _db;
 
-    public HighlightsService(DiscordSocketClient client, IDataCache cache, DbService db)
+    public HighlightsService(DiscordShardedClient client, IDataCache cache, DbService db)
     {
         _client = client;
         _cache = cache;

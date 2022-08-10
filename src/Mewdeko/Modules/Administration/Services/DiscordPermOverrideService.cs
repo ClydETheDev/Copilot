@@ -30,7 +30,7 @@ public class DiscordPermOverrideService : INService, ILateBlocker
 
     public int Priority { get; } = int.MaxValue;
 
-    public async Task<bool> TryBlockLate(DiscordSocketClient client, ICommandContext context, string moduleName,
+    public async Task<bool> TryBlockLate(DiscordShardedClient client, ICommandContext context, string moduleName,
         CommandInfo command)
     {
         if (!TryGetOverrides(context.Guild?.Id ?? 0, command.MethodName(), out var perm) || perm is null) return false;
@@ -38,7 +38,7 @@ public class DiscordPermOverrideService : INService, ILateBlocker
                            .CheckPermissionsAsync(context, command, _services).ConfigureAwait(false);
         return !result.IsSuccess;
     }
-    public async Task<bool> TryBlockLate(DiscordSocketClient client, IInteractionContext context,
+    public async Task<bool> TryBlockLate(DiscordShardedClient client, IInteractionContext context,
         ICommandInfo command)
     {
         if (!TryGetOverrides(context.Guild?.Id ?? 0, command.MethodName, out var perm) || perm is null) return false;

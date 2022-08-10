@@ -20,13 +20,13 @@ public class FilterService : IEarlyBehavior, INService
     private readonly IPubSub _pubSub;
 
     private readonly TypedKey<AutoBanEntry[]> _blPubKey = new("autobanword.reload");
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     public IReadOnlyList<AutoBanEntry> Blacklist;
     public readonly AdministrationService Ass;
     public readonly UserPunishService Upun;
     private readonly GuildSettingsService _gss;
 
-    public FilterService(DiscordSocketClient client, DbService db, IPubSub pubSub,
+    public FilterService(DiscordShardedClient client, DbService db, IPubSub pubSub,
         UserPunishService upun2, IBotStrings strng, AdministrationService ass,
         GuildSettingsService gss, EventHandler eventHandler)
     {
@@ -106,7 +106,7 @@ public class FilterService : IEarlyBehavior, INService
     public int Priority => -50;
     public ModuleBehaviorType BehaviorType => ModuleBehaviorType.Blocker;
 
-    public async Task<bool> RunBehavior(DiscordSocketClient _, IGuild guild, IUserMessage msg) =>
+    public async Task<bool> RunBehavior(DiscordShardedClient _, IGuild guild, IUserMessage msg) =>
         msg.Author is IGuildUser gu && !gu.RoleIds.Contains(await Ass.GetStaffRole(guild.Id)) &&
         !gu.GuildPermissions.Administrator && (await FilterInvites(guild, msg).ConfigureAwait(false)
                                                || await FilterWords(guild, msg).ConfigureAwait(false)

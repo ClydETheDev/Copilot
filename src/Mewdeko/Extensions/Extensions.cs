@@ -82,7 +82,7 @@ public static class Extensions
         var first = attachments.FirstOrDefault();
         return first != null && first.Url.CheckIfMusicUrl();
     }
-    public static List<ulong> GetGuildIds(this DiscordSocketClient client) => client.Guilds.Select(x => x.Id).ToList();
+    public static List<ulong> GetGuildIds(this DiscordShardedClient client) => client.Guilds.Select(x => x.Id).ToList();
 
     // ReSharper disable once InvalidXmlDocComment
     /// Generates a string in the format 00:mm:ss if timespan is less than 2m.

@@ -12,10 +12,10 @@ public partial class Games
     [Group]
     public class HangmanCommands : MewdekoSubmodule<GamesService>
     {
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly GuildSettingsService _guildSettings;
 
-        public HangmanCommands(DiscordSocketClient client, GuildSettingsService guildSettings)
+        public HangmanCommands(DiscordShardedClient client, GuildSettingsService guildSettings)
         {
             _client = client;
             _guildSettings = guildSettings;

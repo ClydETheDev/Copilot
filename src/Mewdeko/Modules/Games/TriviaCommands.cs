@@ -12,12 +12,12 @@ public partial class Games
     public class TriviaCommands : MewdekoSubmodule<GamesService>
     {
         private readonly IDataCache _cache;
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly ICurrencyService _cs;
         private readonly GamesConfigService _gamesConfig;
         private readonly GuildSettingsService _guildSettings;
 
-        public TriviaCommands(DiscordSocketClient client, IDataCache cache, ICurrencyService cs,
+        public TriviaCommands(DiscordShardedClient client, IDataCache cache, ICurrencyService cs,
             GamesConfigService gamesConfig,
             GuildSettingsService guildSettings)
         {

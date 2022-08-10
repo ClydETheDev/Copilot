@@ -11,14 +11,14 @@ public class UtilityService : INService
     private readonly DbService _db;
     private readonly IDataCache _cache;
     private readonly GuildSettingsService _guildSettings;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
 
     public UtilityService(
         DbService db,
         IDataCache cache,
         GuildSettingsService guildSettings,
         EventHandler eventHandler,
-        DiscordSocketClient client)
+        DiscordShardedClient client)
     {
         eventHandler.MessageDeleted += MsgStore;
         eventHandler.MessageUpdated += MsgStore2;

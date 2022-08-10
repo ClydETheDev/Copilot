@@ -13,7 +13,7 @@ public class VerboseErrorsService : INService, IUnloadableService
     private readonly ConcurrentHashSet<ulong> _guildsEnabled;
     private readonly GuildSettingsService _guildSettings;
 
-    public VerboseErrorsService(DiscordSocketClient client, DbService db, CommandHandler ch,
+    public VerboseErrorsService(DiscordShardedClient client, DbService db, CommandHandler ch,
         IBotStrings strings,
         GuildSettingsService guildSettings)
     {

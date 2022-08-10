@@ -2,10 +2,10 @@
 
 public class StatusRolesService : INService
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     public readonly DbService _db;
 
-    public StatusRolesService(DiscordSocketClient client, DbService db)
+    public StatusRolesService(DiscordShardedClient client, DbService db)
     {
         _client = client;
         _db = db;

@@ -105,7 +105,7 @@ public abstract class MewdekoModule : ModuleBase
     public async Task<string> GetButtonInputAsync(ulong channelId, ulong msgId, ulong userId)
     {
         var userInputTask = new TaskCompletionSource<string>();
-        var dsc = (DiscordSocketClient)ctx.Client;
+        var dsc = (DiscordShardedClient)ctx.Client;
         try
         {
             dsc.InteractionCreated += Interaction;
@@ -151,7 +151,7 @@ public abstract class MewdekoModule : ModuleBase
     public async Task<string> NextMessageAsync(ulong channelId, ulong userId)
     {
         var userInputTask = new TaskCompletionSource<string>();
-        var dsc = (DiscordSocketClient)ctx.Client;
+        var dsc = (DiscordShardedClient)ctx.Client;
         try
         {
             dsc.MessageReceived += Interaction;

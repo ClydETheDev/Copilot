@@ -12,7 +12,7 @@ public class AdministrationService : INService
     private readonly LogCommandService _logService;
     private readonly GuildSettingsService _guildSettings;
 
-    public AdministrationService(DiscordSocketClient client, CommandHandler cmdHandler, DbService db,
+    public AdministrationService(DiscordShardedClient client, CommandHandler cmdHandler, DbService db,
         LogCommandService logService,
         GuildSettingsService guildSettings, EventHandler handler)
     {

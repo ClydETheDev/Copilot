@@ -18,7 +18,7 @@ public class HelpService : ILateExecutor, INService
 {
     private readonly BotConfigService _bss;
     public static readonly List<UMsg> UsrMsg = new();
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly DiscordPermOverrideService _dpos;
     private readonly Mewdeko _bot;
     private readonly BlacklistService _blacklistService;
@@ -34,7 +34,7 @@ public class HelpService : ILateExecutor, INService
         IBotStrings strings,
         DiscordPermOverrideService dpos,
         BotConfigService bss,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         Mewdeko bot,
         BlacklistService blacklistService,
         CommandService cmds,
@@ -150,7 +150,7 @@ public class HelpService : ILateExecutor, INService
                 UsrMsg.RemoveRange(tocheck);
         }
     }
-    public Task LateExecute(DiscordSocketClient client, IGuild? guild, IUserMessage msg)
+    public Task LateExecute(DiscordShardedClient client, IGuild? guild, IUserMessage msg)
     {
         var settings = _bss.Data;
         if (guild != null) return Task.CompletedTask;

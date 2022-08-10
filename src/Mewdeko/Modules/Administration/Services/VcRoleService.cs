@@ -7,10 +7,10 @@ namespace Mewdeko.Modules.Administration.Services;
 
 public class VcRoleService : INService
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly DbService _db;
 
-    public VcRoleService(DiscordSocketClient client, Mewdeko bot, DbService db, EventHandler eventHandler)
+    public VcRoleService(DiscordShardedClient client, Mewdeko bot, DbService db, EventHandler eventHandler)
     {
         _db = db;
         _client = client;

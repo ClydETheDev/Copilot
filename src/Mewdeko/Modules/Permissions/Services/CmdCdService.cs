@@ -9,7 +9,7 @@ namespace Mewdeko.Modules.Permissions.Services;
 
 public class CmdCdService : ILateBlocker, INService
 {
-    public CmdCdService(DiscordSocketClient client, DbService db)
+    public CmdCdService(DiscordShardedClient client, DbService db)
     {
         using var uow = db.GetDbContext();
         CommandCooldowns = new ConcurrentDictionary<ulong, ConcurrentHashSet<CommandCooldown>>(
@@ -22,7 +22,7 @@ public class CmdCdService : ILateBlocker, INService
 
     public int Priority { get; } = 0;
 
-    public Task<bool> TryBlockLate(DiscordSocketClient client, ICommandContext ctx, string moduleName,
+    public Task<bool> TryBlockLate(DiscordShardedClient client, ICommandContext ctx, string moduleName,
         CommandInfo command)
     {
         var guild = ctx.Guild;
@@ -31,7 +31,7 @@ public class CmdCdService : ILateBlocker, INService
 
         return TryBlock(guild, user, commandName);
     }
-    public Task<bool> TryBlockLate(DiscordSocketClient client, IInteractionContext ctx,
+    public Task<bool> TryBlockLate(DiscordShardedClient client, IInteractionContext ctx,
         ICommandInfo command)
     {
         var guild = ctx.Guild;

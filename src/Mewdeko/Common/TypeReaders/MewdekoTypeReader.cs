@@ -7,11 +7,11 @@ namespace Mewdeko.Common.TypeReaders;
 public abstract class MewdekoTypeReader<T> : TypeReader
 {
     // ReSharper disable once NotAccessedField.Local
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     // ReSharper disable once NotAccessedField.Local
     private readonly CommandService _cmds;
 
-    protected MewdekoTypeReader(DiscordSocketClient client, CommandService cmds)
+    protected MewdekoTypeReader(DiscordShardedClient client, CommandService cmds)
     {
         _client = client;
         _cmds = cmds;

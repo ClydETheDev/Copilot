@@ -18,7 +18,7 @@ namespace Mewdeko.Modules.Gambling.Services;
 
 public class PlantPickService : INService
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly ICurrencyService _cs;
     private readonly DbService _db;
     private readonly FontProvider _fonts;
@@ -32,7 +32,7 @@ public class PlantPickService : INService
     private readonly SemaphoreSlim _pickLock = new(1, 1);
 
     public PlantPickService(DbService db, CommandHandler cmd, IBotStrings strings,
-        IDataCache cache, FontProvider fonts, ICurrencyService cs, DiscordSocketClient client, GamblingConfigService gss,
+        IDataCache cache, FontProvider fonts, ICurrencyService cs, DiscordShardedClient client, GamblingConfigService gss,
         GuildSettingsService guildSettings)
     {
         _db = db;

@@ -9,7 +9,7 @@ namespace Mewdeko.Modules.Games.Common;
 public class TicTacToe
 {
     private readonly ITextChannel _channel;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly SemaphoreSlim _moveLock;
 
     private readonly string[] _numbers =
@@ -27,7 +27,7 @@ public class TicTacToe
 
     private IGuildUser? winner;
 
-    public TicTacToe(IBotStrings strings, DiscordSocketClient client, ITextChannel channel,
+    public TicTacToe(IBotStrings strings, DiscordShardedClient client, ITextChannel channel,
         IGuildUser firstUser, Options options)
     {
         _channel = channel;

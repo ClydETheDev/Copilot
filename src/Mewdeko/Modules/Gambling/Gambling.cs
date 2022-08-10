@@ -36,7 +36,7 @@ public partial class Gambling : GamblingModuleBase<GamblingService>
     }
 
     private readonly IDataCache _cache;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GamblingConfigService _configService;
     private readonly ICurrencyService _cs;
     private readonly DbService _db;
@@ -48,7 +48,7 @@ public partial class Gambling : GamblingModuleBase<GamblingService>
     private IUserMessage? rdMsg;
 
     public Gambling(DbService db, ICurrencyService currency,
-        IDataCache cache, DiscordSocketClient client,
+        IDataCache cache, DiscordShardedClient client,
         DownloadTracker tracker, GamblingConfigService configService, InteractiveService serv) : base(
         configService)
     {

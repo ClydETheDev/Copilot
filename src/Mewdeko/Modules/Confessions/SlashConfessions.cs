@@ -127,8 +127,8 @@ public class SlashConfessions : MewdekoSlashModuleBase<ConfessionService>
             return;
         }
 
-        var reportedGuild = await ((DiscordSocketClient)ctx.Client).Rest.GetGuildAsync(serverId).ConfigureAwait(false);
-        var channel = await ((DiscordSocketClient)ctx.Client).Rest.GetChannelAsync(_credentials.ConfessionReportChannelId).ConfigureAwait(false) as ITextChannel;
+        var reportedGuild = await ((DiscordShardedClient)ctx.Client).Rest.GetGuildAsync(serverId).ConfigureAwait(false);
+        var channel = await ((DiscordShardedClient)ctx.Client).Rest.GetChannelAsync(_credentials.ConfessionReportChannelId).ConfigureAwait(false) as ITextChannel;
         var eb = new EmbedBuilder().WithErrorColor().WithTitle("Confessions Abuse Report Recieved")
                                    .AddField("Report", how)
                                    .AddField("Report User", $"{ctx.User} | {ctx.User.Id}")

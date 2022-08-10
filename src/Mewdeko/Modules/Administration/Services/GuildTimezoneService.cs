@@ -8,7 +8,7 @@ public class GuildTimezoneService : INService
     private readonly DbService _db;
     private readonly ConcurrentDictionary<ulong, TimeZoneInfo> _timezones;
 
-    public GuildTimezoneService(DiscordSocketClient client, Mewdeko bot, DbService db)
+    public GuildTimezoneService(DiscordShardedClient client, Mewdeko bot, DbService db)
     {
         using var uow = db.GetDbContext();
         _timezones = uow.GuildConfigs.All().Where(x => client.Guilds.Select(x => x.Id).Contains(x.GuildId))

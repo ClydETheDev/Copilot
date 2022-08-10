@@ -27,7 +27,7 @@ public class SlashChatTriggers : MewdekoSlashModuleBase<ChatTriggersService>
     {
         guildId ??= 0;
         var ct = await Service.GetChatTriggers(guildId, triggerId);
-        await Service.RunInteractionTrigger(ctx.Client as DiscordSocketClient, ctx.Interaction as SocketInteraction, ct).ConfigureAwait(false);
+        await Service.RunInteractionTrigger(ctx.Client as DiscordShardedClient, ctx.Interaction as SocketInteraction, ct).ConfigureAwait(false);
     }
 
     [SlashCommand("export", "Exports Chat Triggers into a .yml file."),

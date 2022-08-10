@@ -29,9 +29,8 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
     }
 
     private readonly Mewdeko _bot;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly DbService _db;
-    private readonly ICoordinator _coord;
     private readonly IEnumerable<IConfigService> _settingServices;
     private readonly IBotStrings _strings;
     private readonly InteractiveService _interactivity;
@@ -42,11 +41,10 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
     private readonly GuildSettingsService _guildSettings;
 
     public OwnerOnly(
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         Mewdeko bot,
         IBotStrings strings,
         InteractiveService serv,
-        ICoordinator coord,
         IEnumerable<IConfigService> settingServices,
         DbService db,
         IDataCache cache,
@@ -59,7 +57,6 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
         _client = client;
         _bot = bot;
         _strings = strings;
-        _coord = coord;
         _settingServices = settingServices;
         _db = db;
         _cache = cache;
@@ -523,119 +520,11 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
         else
             await ReplyConfirmLocalizedAsync("fwall_stop").ConfigureAwait(false);
     }
+    
 
     [Cmd, Aliases]
-    public async Task ShardStats()
-    {
-        var statuses = _coord.GetAllShardStatuses();
-
-        var status = string.Join(" : ", statuses
-            .Select(x => (ConnectionStateToEmoji(x), x))
-            .GroupBy(x => x.Item1)
-            .Select(x => $"`{x.Count()} {x.Key}`")
-            .ToArray());
-
-        var allShardStrings = statuses
-            .Select(st =>
-            {
-                var stateStr = ConnectionStateToEmoji(st);
-                var timeDiff = DateTime.UtcNow - st.LastUpdate;
-                var maxGuildCountLength = statuses.Max(x => x.GuildCount).ToString().Length;
-                return
-                    $"`{stateStr} | #{st.ShardId.ToString().PadBoth(3)} | {timeDiff:mm\\:ss} | {st.GuildCount.ToString().PadBoth(maxGuildCountLength)} | {st.UserCount}`";
-            })
-            .ToArray();
-
-        var paginator = new LazyPaginatorBuilder()
-            .AddUser(ctx.User)
-            .WithPageFactory(PageFactory)
-            .WithFooter(PaginatorFooter.PageNumber | PaginatorFooter.Users)
-            .WithMaxPageIndex(allShardStrings.Length / 25)
-            .WithDefaultEmotes()
-            .WithActionOnCancellation(ActionOnStop.DeleteMessage)
-            .Build();
-
-        await _interactivity.SendPaginatorAsync(paginator, Context.Channel, TimeSpan.FromMinutes(60)).ConfigureAwait(false);
-
-        async Task<PageBuilder> PageFactory(int page)
-        {
-            await Task.CompletedTask.ConfigureAwait(false);
-            var str = string.Join("\n", allShardStrings.Skip(25 * page).Take(25));
-
-            if (string.IsNullOrWhiteSpace(str))
-                str = GetText("no_shards_on_page");
-
-            return new PageBuilder()
-                .WithAuthor(a => a.WithName(GetText("shard_stats")))
-                .WithTitle(status)
-                .WithColor(Mewdeko.OkColor)
-                .WithDescription(str);
-        }
-    }
-
-    private static string ConnectionStateToEmoji(ShardStatus status)
-    {
-        var timeDiff = DateTime.UtcNow - status.LastUpdate;
-        return status.ConnectionState switch
-        {
-            ConnectionState.Connected => "✅",
-            ConnectionState.Disconnected => "🔻",
-            _ when timeDiff > TimeSpan.FromSeconds(30) => " ❗ ",
-            _ => " ⏳"
-        };
-    }
-
-    [Cmd, Aliases]
-    public async Task RestartShard(int shardId)
-    {
-        var success = _coord.RestartShard(shardId);
-        if (success)
-            await ReplyConfirmLocalizedAsync("shard_reconnecting", Format.Bold($"#{shardId}")).ConfigureAwait(false);
-        else
-            await ReplyErrorLocalizedAsync("no_shard_id").ConfigureAwait(false);
-    }
-
-    [Cmd, Aliases]
-    public Task LeaveServer([Remainder] string guildStr) => Service.LeaveGuild(guildStr);
-
-    [Cmd, Aliases]
-    public async Task Die()
-    {
-        try
-        {
-            await ReplyConfirmLocalizedAsync("shutting_down").ConfigureAwait(false);
-        }
-        catch
-        {
-            // ignored
-        }
-
-        await Task.Delay(2000).ConfigureAwait(false);
-        Environment.SetEnvironmentVariable("SNIPE_CACHED", "0");
-        Environment.SetEnvironmentVariable("AFK_CACHED", "0");
-        _coord.Die();
-    }
-
-    [Cmd, Aliases]
-    public async Task Restart()
-    {
-        var success = _coord.RestartBot();
-        if (!success)
-        {
-            await ReplyErrorLocalizedAsync("restart_fail").ConfigureAwait(false);
-            return;
-        }
-
-        try
-        {
-            await ReplyConfirmLocalizedAsync("restarting").ConfigureAwait(false);
-        }
-        catch
-        {
-            // ignored
-        }
-    }
-
+    public async Task LeaveServer([Remainder] string guildStr) => await Service.LeaveGuild(guildStr);
+    
     [Cmd, Aliases]
     public async Task SetName([Remainder] string newName)
     {
@@ -946,5 +835,5 @@ public sealed class EvaluationEnvironment
     public IGuild Guild => Ctx.Guild;
     public IUser User => Ctx.User;
     public IGuildUser Member => (IGuildUser)Ctx.User;
-    public DiscordSocketClient Client => Ctx.Client as DiscordSocketClient;
+    public DiscordShardedClient Client => Ctx.Client as DiscordShardedClient;
 }

@@ -14,9 +14,9 @@ public partial class Utility
     public class InviteCommands : MewdekoSubmodule<InviteService>
     {
         private readonly InteractiveService _interactivity;
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
 
-        public InviteCommands(InteractiveService serv, DiscordSocketClient client)
+        public InviteCommands(InteractiveService serv, DiscordShardedClient client)
         {
             _client = client;
             _interactivity = serv;

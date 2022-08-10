@@ -9,11 +9,11 @@ namespace Mewdeko.Modules.Music.Services;
 
 public class MusicPlayer : LavalinkPlayer
 {
-    private DiscordSocketClient client;
+    private DiscordShardedClient client;
     private MusicService musicService;
 
     public MusicPlayer(
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         MusicService musicService)
     {
         this.client = client;

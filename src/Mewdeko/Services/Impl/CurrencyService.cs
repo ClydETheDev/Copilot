@@ -9,7 +9,7 @@ public class CurrencyService : ICurrencyService
     private readonly DbService _db;
     private readonly GamblingConfigService _gss;
 
-    public CurrencyService(DbService db, DiscordSocketClient c,
+    public CurrencyService(DbService db, DiscordShardedClient c,
         GamblingConfigService gss)
     {
         _db = db;

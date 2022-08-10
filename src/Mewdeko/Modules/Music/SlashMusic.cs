@@ -20,11 +20,11 @@ public class SlashMusic : MewdekoSlashModuleBase<MusicService>
     private readonly InteractiveService _interactivity;
     private readonly LavalinkNode _lavaNode;
     private readonly DbService _db;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GuildSettingsService _guildSettings;
 
     public SlashMusic(LavalinkNode lava, InteractiveService interactive, DbService dbService,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         GuildSettingsService guildSettings)
     {
         _db = dbService;

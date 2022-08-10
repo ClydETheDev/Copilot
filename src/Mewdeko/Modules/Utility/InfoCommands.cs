@@ -12,10 +12,10 @@ public partial class Utility
     [Group]
     public class InfoCommands : MewdekoSubmodule<UtilityService>
     {
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly MuteService _muteService;
 
-        public InfoCommands(DiscordSocketClient client, MuteService muteService)
+        public InfoCommands(DiscordShardedClient client, MuteService muteService)
         {
             _client = client;
             _muteService = muteService;

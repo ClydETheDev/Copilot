@@ -5,7 +5,7 @@ namespace Mewdeko.Modules.Server_Management.Services;
 
 public class ServerManagementService : INService
 {
-    public ServerManagementService(DiscordSocketClient client, DbService db)
+    public ServerManagementService(DiscordShardedClient client, DbService db)
     {
         using var uow = db.GetDbContext();
         var configs = uow.GuildConfigs.All().Where(x => client.Guilds.Select(x => x.Id).Contains(x.GuildId));

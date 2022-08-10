@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Mewdeko.Common;
 
-public abstract class MewdekoSlashCommandModule : InteractionModuleBase
+public abstract class MewdekoSlashCommandModule : InteractionModuleBase<ShardedInteractionContext>
 {
     protected CultureInfo? CultureInfo { get; set; }
     public IBotStrings Strings { get; set; }
@@ -86,7 +86,7 @@ public abstract class MewdekoSlashCommandModule : InteractionModuleBase
     public async Task<string> GetButtonInputAsync(ulong channelId, ulong msgId, ulong userId)
     {
         var userInputTask = new TaskCompletionSource<string>();
-        var dsc = (DiscordSocketClient)ctx.Client;
+        var dsc = (DiscordShardedClient)ctx.Client;
         try
         {
             dsc.InteractionCreated += Interaction;
@@ -135,7 +135,7 @@ public abstract class MewdekoSlashCommandModule : InteractionModuleBase
     public async Task<string> NextMessageAsync(ulong channelId, ulong userId)
     {
         var userInputTask = new TaskCompletionSource<string>();
-        var dsc = (DiscordSocketClient)ctx.Client;
+        var dsc = (DiscordShardedClient)ctx.Client;
         try
         {
             dsc.MessageReceived += Interaction;

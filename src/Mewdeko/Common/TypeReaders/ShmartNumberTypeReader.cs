@@ -12,7 +12,7 @@ public class ShmartNumberTypeReader : MewdekoTypeReader<ShmartNumber>
 {
     private static readonly Regex _percentRegex = new(@"^((?<num>100|\d{1,2})%)$", RegexOptions.Compiled);
 
-    public ShmartNumberTypeReader(DiscordSocketClient client, CommandService cmds) : base(client, cmds)
+    public ShmartNumberTypeReader(DiscordShardedClient client, CommandService cmds) : base(client, cmds)
     {
     }
 

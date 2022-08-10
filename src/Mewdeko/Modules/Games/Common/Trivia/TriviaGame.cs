@@ -11,7 +11,7 @@ namespace Mewdeko.Modules.Games.Common.Trivia;
 
 public class TriviaGame
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GamesConfig _config;
     private readonly ICurrencyService _cs;
     private readonly SemaphoreSlim _guessLock = new(1, 1);
@@ -24,7 +24,7 @@ public class TriviaGame
 
     private CancellationTokenSource triviaCancelSource;
 
-    public TriviaGame(IBotStrings strings, DiscordSocketClient client, GamesConfig config,
+    public TriviaGame(IBotStrings strings, DiscordShardedClient client, GamesConfig config,
         IDataCache cache, ICurrencyService cs, IGuild guild, ITextChannel channel,
         TriviaOptions options, string? quitCommand)
     {

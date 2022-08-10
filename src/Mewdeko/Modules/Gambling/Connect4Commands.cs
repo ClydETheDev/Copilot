@@ -17,14 +17,14 @@ public partial class Gambling
         private static readonly string[] _numbers =
             {":one:", ":two:", ":three:", ":four:", ":five:", ":six:", ":seven:", ":eight:"};
 
-        private readonly DiscordSocketClient _client;
+        private readonly DiscordShardedClient _client;
         private readonly ICurrencyService _cs;
 
         private int repostCounter;
 
         private IUserMessage? msg;
 
-        public Connect4Commands(DiscordSocketClient client, ICurrencyService cs, GamblingConfigService gamb)
+        public Connect4Commands(DiscordShardedClient client, ICurrencyService cs, GamblingConfigService gamb)
             : base(gamb)
         {
             _client = client;

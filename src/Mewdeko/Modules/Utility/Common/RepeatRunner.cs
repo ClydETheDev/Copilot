@@ -8,7 +8,7 @@ namespace Mewdeko.Modules.Utility.Common;
 
 public class RepeatRunner
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
 
     private readonly MessageRepeaterService _mrs;
 
@@ -16,7 +16,7 @@ public class RepeatRunner
 
     private Timer t;
 
-    public RepeatRunner(DiscordSocketClient client, SocketGuild guild, Repeater repeater,
+    public RepeatRunner(DiscordShardedClient client, SocketGuild guild, Repeater repeater,
         MessageRepeaterService mrs)
     {
         Repeater = repeater;

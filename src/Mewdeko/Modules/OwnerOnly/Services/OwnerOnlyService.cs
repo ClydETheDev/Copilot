@@ -21,7 +21,7 @@ public class OwnerOnlyService : ILateExecutor, IReadyExecutor, INService
     private readonly BotConfigService _bss;
 
     private readonly IDataCache _cache;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly CommandHandler _cmdHandler;
     private readonly IBotCredentials _creds;
     private readonly DbService _db;
@@ -38,7 +38,7 @@ public class OwnerOnlyService : ILateExecutor, IReadyExecutor, INService
     private ImmutableDictionary<ulong, IDMChannel> ownerChannels =
         new Dictionary<ulong, IDMChannel>().ToImmutableDictionary();
 
-    public OwnerOnlyService(DiscordSocketClient client, CommandHandler cmdHandler, DbService db,
+    public OwnerOnlyService(DiscordShardedClient client, CommandHandler cmdHandler, DbService db,
         IBotStrings strings, IBotCredentials creds, IDataCache cache, IHttpClientFactory factory,
         BotConfigService bss, IEnumerable<IPlaceholderProvider> phProviders, Mewdeko bot,
         GuildSettingsService guildSettings)
@@ -55,24 +55,18 @@ public class OwnerOnlyService : ILateExecutor, IReadyExecutor, INService
         var imgs = cache.LocalImages;
         _httpFactory = factory;
         _bss = bss;
-        if (client.ShardId == 0)
-        {
             _rep = new ReplacementBuilder()
                 .WithClient(client)
                 .WithProviders(phProviders)
                 .Build();
 
             _ = new Timer(RotatingStatuses, new TimerState(), TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
-        }
 
-        var sub = redis.GetSubscriber();
-        if (_client.ShardId == 0)
-        {
+            var sub = redis.GetSubscriber();
             sub.Subscribe($"{_creds.RedisKey()}_reload_images",
                 delegate { imgs.Reload(); }, CommandFlags.FireAndForget);
-        }
 
-        sub.Subscribe($"{_creds.RedisKey()}_leave_guild", async (_, v) =>
+            sub.Subscribe($"{_creds.RedisKey()}_leave_guild", async (_, v) =>
         {
             try
             {
@@ -103,7 +97,7 @@ public class OwnerOnlyService : ILateExecutor, IReadyExecutor, INService
     }
 
     // forwards dms
-    public async Task LateExecute(DiscordSocketClient client, IGuild guild, IUserMessage msg)
+    public async Task LateExecute(DiscordShardedClient client, IGuild guild, IUserMessage msg)
     {
         var bs = _bss.Data;
         if (msg.Channel is IDMChannel && _bss.Data.ForwardMessages && ownerChannels.Count > 0)
@@ -180,9 +174,7 @@ public class OwnerOnlyService : ILateExecutor, IReadyExecutor, INService
                 // ignored
             }
         }
-
-        if (_client.ShardId == 0)
-        {
+        
             var channels = await Task.WhenAll(_creds.OwnerIds.Select(id =>
             {
                 var user = _client.GetUser(id);
@@ -203,7 +195,6 @@ public class OwnerOnlyService : ILateExecutor, IReadyExecutor, INService
                 Log.Information(
                                 $"Created {ownerChannels.Count} out of {_creds.OwnerIds.Length} owner message channels.");
             }
-        }
     }
 
     private async void RotatingStatuses(object objState)
@@ -295,7 +286,7 @@ public class OwnerOnlyService : ILateExecutor, IReadyExecutor, INService
                 return;
 
             var guildShard = (int)((cmd.GuildId.Value >> 22) % (ulong)_creds.TotalShards);
-            if (guildShard != _client.ShardId)
+            if (guildShard != _client.GetShardIdFor(_client.GetGuild(cmd.GuildId.Value)))
                 return;
             var prefix = await _guildSettings.GetPrefix(cmd.GuildId.Value);
             //if someone already has .die as their startup command, ignore it

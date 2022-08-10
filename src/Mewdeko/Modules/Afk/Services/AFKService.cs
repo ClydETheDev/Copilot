@@ -9,13 +9,13 @@ namespace Mewdeko.Modules.Afk.Services;
 public class AfkService : INService, IReadyExecutor
 {
     private readonly DbService _db;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly IDataCache _cache;
     private readonly GuildSettingsService _guildSettings;
 
     public AfkService(
         DbService db,
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         IDataCache cache,
         GuildSettingsService guildSettings, EventHandler eventHandler)
     {
@@ -44,7 +44,7 @@ public class AfkService : INService, IReadyExecutor
             });
         }
 
-        Environment.SetEnvironmentVariable($"AFK_CACHED_{_client.ShardId}", "1");
+        Environment.SetEnvironmentVariable($"AFK_CACHED", "1");
         Log.Information("AFK Cached.");
     }
 

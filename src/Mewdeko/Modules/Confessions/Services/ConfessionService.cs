@@ -5,9 +5,9 @@ namespace Mewdeko.Modules.Confessions.Services;
 public class ConfessionService : INService
 {
     private readonly DbService _db;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GuildSettingsService _guildSettings;
-    public ConfessionService(DbService db, DiscordSocketClient client,
+    public ConfessionService(DbService db, DiscordShardedClient client,
         GuildSettingsService guildSettings)
     {
         _db = db;

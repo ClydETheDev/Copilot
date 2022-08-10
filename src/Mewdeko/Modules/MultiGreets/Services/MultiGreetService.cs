@@ -5,11 +5,11 @@ namespace Mewdeko.Modules.MultiGreets.Services;
 public class MultiGreetService : INService
 {
     private readonly DbService _db;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly GuildSettingsService _guildSettingsService;
 
 
-    public MultiGreetService(DbService db, DiscordSocketClient client,
+    public MultiGreetService(DbService db, DiscordShardedClient client,
         GuildSettingsService guildSettingsService, EventHandler eventHandler)
     {
         _client = client;

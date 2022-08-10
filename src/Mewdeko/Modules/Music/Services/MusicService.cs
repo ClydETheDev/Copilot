@@ -17,7 +17,7 @@ public class MusicService : INService
     private readonly LavalinkNode _lavaNode;
     private readonly IBotCredentials _creds;
 
-    public MusicService(LavalinkNode lavaNode, IBotCredentials creds, DbService db, DiscordSocketClient client, EventHandler eventHandler)
+    public MusicService(LavalinkNode lavaNode, IBotCredentials creds, DbService db, DiscordShardedClient client, EventHandler eventHandler)
     {
         _lavaNode = lavaNode;
         _creds = creds;

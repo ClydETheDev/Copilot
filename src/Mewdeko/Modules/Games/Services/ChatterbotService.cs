@@ -11,7 +11,7 @@ namespace Mewdeko.Modules.Games.Services;
 
 public class ChatterBotService : INService
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly BlacklistService _blacklistService;
     private readonly IBotCredentials _creds;
     private readonly DbService _db;
@@ -19,7 +19,7 @@ public class ChatterBotService : INService
     private readonly GuildSettingsService _guildSettings;
     public List<ulong> LimitUser = new();
 
-    public ChatterBotService(DiscordSocketClient client, IHttpClientFactory factory,
+    public ChatterBotService(DiscordShardedClient client, IHttpClientFactory factory,
         IBotCredentials creds, DbService db,
         BlacklistService blacklistService,
         GuildSettingsService guildSettings, EventHandler eventHandler)

@@ -8,8 +8,8 @@ public interface ILateBlocker
 {
     public int Priority { get; }
 
-    Task<bool> TryBlockLate(DiscordSocketClient client, ICommandContext context,
+    Task<bool> TryBlockLate(DiscordShardedClient client, ICommandContext context,
         string moduleName, CommandInfo command);
-    Task<bool> TryBlockLate(DiscordSocketClient client, IInteractionContext context,
+    Task<bool> TryBlockLate(DiscordShardedClient client, IInteractionContext context,
         ICommandInfo command);
 }

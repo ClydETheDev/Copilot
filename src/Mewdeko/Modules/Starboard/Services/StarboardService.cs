@@ -6,11 +6,11 @@ namespace Mewdeko.Modules.Starboard.Services;
 
 public class StarboardService : INService, IReadyExecutor
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly DbService _db;
     private readonly GuildSettingsService _guildSettings;
 
-    public StarboardService(DiscordSocketClient client, DbService db,
+    public StarboardService(DiscordShardedClient client, DbService db,
         GuildSettingsService bot, EventHandler eventHandler)
     {
         _client = client;

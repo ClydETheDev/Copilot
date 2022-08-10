@@ -18,7 +18,7 @@ public class ProtectionService : INService
     private readonly ConcurrentDictionary<ulong, AntiSpamStats> _antiSpamGuilds
         = new();
 
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly DbService _db;
     private readonly MuteService _mute;
     private readonly UserPunishService _punishService;
@@ -32,7 +32,7 @@ public class ProtectionService : INService
             FullMode = BoundedChannelFullMode.DropOldest
         });
 
-    public ProtectionService(DiscordSocketClient client, Mewdeko bot,
+    public ProtectionService(DiscordShardedClient client, Mewdeko bot,
         MuteService mute, DbService db, UserPunishService punishService, EventHandler eventHandler)
     {
         _client = client;

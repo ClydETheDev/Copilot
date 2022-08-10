@@ -8,11 +8,11 @@ namespace Mewdeko.Modules.Utility.Services;
 
 public class MessageRepeaterService : INService
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly IBotCredentials _creds;
     private readonly DbService _db;
 
-    public MessageRepeaterService(DiscordSocketClient client, DbService db,
+    public MessageRepeaterService(DiscordShardedClient client, DbService db,
         IBotCredentials creds, Mewdeko bot)
     {
         _db = db;
@@ -24,14 +24,14 @@ public class MessageRepeaterService : INService
     public ConcurrentDictionary<ulong, ConcurrentDictionary<int, RepeatRunner>> Repeaters { get; set; }
     public bool RepeaterReady { get; private set; }
 
-    public async Task OnReadyAsync(DiscordSocketClient client, Mewdeko bot)
+    public async Task OnReadyAsync(DiscordShardedClient client, Mewdeko bot)
     {
         await bot.Ready.Task.ConfigureAwait(false);
-        Log.Information("Loading message repeaters on shard {ShardId}.", _client.ShardId);
+        Log.Information("Loading message repeaters");
         await using var uow = _db.GetDbContext();
         var gcs = uow.GuildConfigs.All().Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
         var repeaters = new Dictionary<ulong, ConcurrentDictionary<int, RepeatRunner>>();
-        foreach (var gc in gcs.Where(gc => (gc.GuildId >> 22) % (ulong)_creds.TotalShards == (ulong)_client.ShardId))
+        foreach (var gc in gcs)
         {
             try
             {

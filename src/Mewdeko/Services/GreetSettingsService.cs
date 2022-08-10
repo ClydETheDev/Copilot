@@ -10,13 +10,13 @@ namespace Mewdeko.Services;
 public class GreetSettingsService : INService, IReadyExecutor
 {
     private readonly BotConfigService _bss;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly DbService _db;
     private readonly GuildSettingsService _gss;
 
     private readonly GreetGrouper<IGuildUser> _greets = new();
 
-    public GreetSettingsService(DiscordSocketClient client, GuildSettingsService gss, DbService db,
+    public GreetSettingsService(DiscordShardedClient client, GuildSettingsService gss, DbService db,
         BotConfigService bss, EventHandler eventHandler)
     {
         _db = db;

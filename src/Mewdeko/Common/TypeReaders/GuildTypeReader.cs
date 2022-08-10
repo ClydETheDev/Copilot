@@ -5,9 +5,9 @@ namespace Mewdeko.Common.TypeReaders;
 
 public class GuildTypeReader : MewdekoTypeReader<IGuild>
 {
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
 
-    public GuildTypeReader(DiscordSocketClient client, CommandService cmds) : base(client, cmds) => _client = client;
+    public GuildTypeReader(DiscordShardedClient client, CommandService cmds) : base(client, cmds) => _client = client;
 
     public override Task<TypeReaderResult> ReadAsync(ICommandContext context, string input, IServiceProvider _)
     {

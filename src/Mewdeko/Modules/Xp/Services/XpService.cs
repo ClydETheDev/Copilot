@@ -29,7 +29,7 @@ public class XpService : INService, IUnloadableService
     private readonly ConcurrentQueue<UserCacheItem> _addMessageXp = new();
 
     private readonly IDataCache _cache;
-    private readonly DiscordSocketClient _client;
+    private readonly DiscordShardedClient _client;
     private readonly CommandHandler _cmd;
     private readonly IBotCredentials _creds;
     private readonly EventHandler _eventHandler;
@@ -54,7 +54,7 @@ public class XpService : INService, IUnloadableService
     });
 
     public XpService(
-        DiscordSocketClient client,
+        DiscordShardedClient client,
         CommandHandler cmd,
         DbService db,
         IBotStrings strings,
@@ -83,14 +83,11 @@ public class XpService : INService, IUnloadableService
         _client = client;
 
         InternalReloadXpTemplate();
-
-        if (client.ShardId == 0)
-        {
+        
             var sub = _cache.Redis.GetSubscriber();
             sub.Subscribe($"{_creds.RedisKey()}_reload_xp_template", (_, _) => InternalReloadXpTemplate());
-        }
 
-        using var uow = db.GetDbContext();
+            using var uow = db.GetDbContext();
         //load settings
         var allGuildConfigs = uow.GuildConfigs.All().Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
         XpTxtRates = allGuildConfigs.ToDictionary(x => x.GuildId, x => x.XpTxtRate).ToConcurrent();

@@ -8,7 +8,7 @@ public class GameVoiceChannelService : INService
     private readonly DbService _db;
     private readonly GuildSettingsService _guildSettings;
 
-    public GameVoiceChannelService(DiscordSocketClient client, DbService db,
+    public GameVoiceChannelService(DiscordShardedClient client, DbService db,
         GuildSettingsService guildSettings, EventHandler eventHandler)
     {
         _db = db;

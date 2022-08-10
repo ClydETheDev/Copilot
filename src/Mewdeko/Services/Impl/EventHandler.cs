@@ -34,7 +34,7 @@ public class EventHandler
     public event AsyncEventHandler<Cacheable<IUser, ulong>, Cacheable<IMessageChannel, ulong>> UserIsTyping;
 
 
-    public EventHandler(DiscordSocketClient client)
+    public EventHandler(DiscordShardedClient client)
     {
         client.MessageReceived += ClientOnMessageReceived;
         client.UserJoined += ClientOnUserJoined;

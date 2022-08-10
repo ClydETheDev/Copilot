@@ -68,7 +68,7 @@ public class SlashPronoun : MewdekoSlashSubmodule<PronounsService>
                                            ? "Never Cleared"
                                            : user.PronounsClearedReason)
                                    .AddField("Pronouns", user.Pronouns)
-                                   .WithFooter($"reported in the guild {ctx.Guild?.Id ?? 0} on shard {(ctx.Client as DiscordSocketClient)?.ShardId ?? 0}")
+                                   .WithFooter($"reported in the guild {ctx.Guild?.Id ?? 0}")
                                    .WithErrorColor();
         var cb = new ComponentBuilder()
                  .WithButton("Reported User", "reported_row", ButtonStyle.Secondary, disabled: true)
