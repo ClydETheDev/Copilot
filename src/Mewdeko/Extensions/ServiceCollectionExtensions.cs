@@ -2,6 +2,7 @@
 using Mewdeko.Services.strings;
 using Mewdeko.Services.strings.impl;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 using System.Reflection;
 
 namespace Mewdeko.Extensions;
@@ -15,17 +16,16 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddConfigServices(this IServiceCollection services)
     {
+        Log.Information("Adding config services...");
         var baseType = typeof(ConfigServiceBase<>);
 
         foreach (var type in Assembly.GetCallingAssembly().ExportedTypes.Where(x => x.IsSealed))
         {
-            if (type.BaseType?.IsGenericType == true && type.BaseType.GetGenericTypeDefinition() == baseType)
-            {
-                services.AddSingleton(type);
-                services.AddSingleton(x => (IConfigService)x.GetRequiredService(type));
-            }
+            if (type.BaseType?.IsGenericType != true || type.BaseType.GetGenericTypeDefinition() != baseType) continue;
+            services.AddSingleton(type);
+            services.AddSingleton(x => (IConfigService)x.GetRequiredService(type));
         }
-
+        Log.Information("Finished adding config services...");
         return services;
     }
 

@@ -41,7 +41,6 @@ public class Mewdeko
         Credentials = new BotCredentials();
         Cache = new RedisCache(Credentials, shardId);
         _db = new DbService(Credentials.TotalShards);
-        _guildSettingsService = new GuildSettingsService(_db, null);
         
 
        _db.Setup();
@@ -72,11 +71,12 @@ public class Mewdeko
 
     public static Color OkColor { get; set; }
     public static Color ErrorColor { get; set; }
-    private int ShardConnectedCount = 1;
+    private int shardConnectedCount = 1;
+    private bool servicesAdded;
 
     public TaskCompletionSource<bool> Ready { get; } = new();
 
-    private IServiceProvider Services { get; set; }
+    private IServiceProvider? Services { get; set; }
     private IDataCache Cache { get; }
 
     public event Func<GuildConfig, Task> JoinedGuild = delegate { return Task.CompletedTask; };
@@ -90,16 +90,13 @@ public class Mewdeko
         
 
         using var uow = _db.GetDbContext();
-        var configs = uow.GuildConfigs.All().Where(x => Client.Guilds.Select(socketguild => socketguild.Id).Contains(x.GuildId));
-        foreach (var config in configs)
-        {
-            _guildSettingsService.UpdateGuildConfig(config.GuildId, config);
-        }
+        var guilds = Client.Guilds.Select(x => x.Id).ToList();
+        var guildSettingsService = new GuildSettingsService(_db, null, guilds);
         var bot = Client.CurrentUser;
         uow.EnsureUserCreated(bot.Id, bot.Username, bot.Discriminator, bot.AvatarId);
         gs2.Stop();
         Log.Information($"Guild Configs cached in {gs2.Elapsed.TotalSeconds:F2}s.");
-
+        
         var s = new ServiceCollection()
                 .AddSingleton<IBotCredentials>(Credentials)
                 .AddSingleton(_db)
@@ -108,6 +105,7 @@ public class Mewdeko
                 .AddSingleton(CommandService)
                 .AddSingleton(this)
                 .AddSingleton(Cache)
+                .AddSingleton(guildSettingsService)
                 .AddSingleton(new MartineApi())
                 .AddSingleton(Cache.Redis)
                 .AddTransient<ISeria, JsonSeria>()
@@ -210,7 +208,6 @@ public class Mewdeko
     private async Task LoginAsync(string token)
     {
         Client.Log += Client_Log;
-        var clientReady = new TaskCompletionSource<bool>();
 
         //connect
         Log.Information("Bot logging in... ...");
@@ -242,10 +239,13 @@ public class Mewdeko
 
     private Task ClientOnShardReady(DiscordSocketClient arg)
     {
-        if (ShardConnectedCount == Client.Shards.Count)
+        if (shardConnectedCount == Client.Shards.Count)
         {
             _ = Task.Run(async () =>
             {
+                if (servicesAdded)
+                    return;
+                servicesAdded = true;
                 AddServices();
                 var commandService = Services.GetService<CommandService>();
                 var interactionService = Services.GetRequiredService<InteractionService>();
@@ -279,7 +279,7 @@ public class Mewdeko
             });
         }
         else
-            ShardConnectedCount++;
+            shardConnectedCount++;
         return Task.CompletedTask;
     }
 

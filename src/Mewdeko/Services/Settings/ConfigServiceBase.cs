@@ -62,10 +62,10 @@ public abstract class ConfigServiceBase<TSettings> : IConfigService
     /// <summary>
     ///     Loads new data and publishes the new state
     /// </summary>
-    public void Reload()
+    public async void Reload()
     {
         Load();
-        _pubSub.Pub(_changeKey, data);
+        await _pubSub.Pub(_changeKey, data);
     }
 
     public IReadOnlyList<string> GetSettableProps() => _propSetters.Keys.ToList();
@@ -95,7 +95,7 @@ public abstract class ConfigServiceBase<TSettings> : IConfigService
         return success;
     }
 
-    private void PublishChange() => _pubSub.Pub(_changeKey, data);
+    private async void PublishChange() => await _pubSub.Pub(_changeKey, data);
 
     private ValueTask OnChangePublished(TSettings newData)
     {
