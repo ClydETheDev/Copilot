@@ -6,7 +6,6 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Mewdeko.Votes.Common;
 using Serilog;
-using EventHandler = Mewdeko.Services.Impl.EventHandler;
 
 namespace Mewdeko.Modules.Administration.Services;
 
@@ -18,7 +17,7 @@ public class AdministrationService : INService
 
     public AdministrationService(DiscordSocketClient client, CommandHandler cmdHandler, DbService db,
         LogCommandService logService,
-        GuildSettingsService guildSettings, EventHandler handler)
+        GuildSettingsService guildSettings)
     {
         using var uow = db.GetDbContext();
         var gc = uow.GuildConfigs.All().Where(x => client.Guilds.Select(x => x.Id).Contains(x.GuildId));
