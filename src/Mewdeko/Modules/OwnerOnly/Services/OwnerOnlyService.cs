@@ -74,6 +74,7 @@ public class OwnerOnlyService : ILateExecutor, IReadyExecutor, INService
         sub.Subscribe($"{_creds.RedisKey()}_leave_guild", async (_, v) =>
         {
             try
+            
             {
                 var guildStr = v.ToString()?.Trim().ToUpperInvariant();
                 if (string.IsNullOrWhiteSpace(guildStr))
