@@ -1,7 +1,5 @@
 ﻿using Mewdeko.Database.Common;
 
-// ReSharper disable InconsistentNaming
-
 namespace Mewdeko.Database.Models;
 
 public class GuildConfig : DbEntity
@@ -64,7 +62,7 @@ public class GuildConfig : DbEntity
     public ulong SuggestButtonMessageId { get; set; } = 0;
     public int SuggestButtonRepostThreshold { get; set; } = 5;
     public int SuggestButtonColor { get; set; } = 2;
-
+    public ulong KarutaEventChannel { get; set; }
     public string AfkMessage { get; set; } = "-";
     public string AutoBotRoleIds { get; set; }
     public int GBEnabled { get; set; } = 1;
