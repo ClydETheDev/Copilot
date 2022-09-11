@@ -1,7 +1,10 @@
 ﻿using Discord.Commands;
 using Mewdeko.Common.Collections;
+using Mewdeko.Common.PubSub;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using Mewdeko.Votes.Common;
+using Serilog;
 
 namespace Mewdeko.Modules.Administration.Services;
 
@@ -10,6 +13,8 @@ public class AdministrationService : INService
     private readonly DbService _db;
     private readonly LogCommandService _logService;
     private readonly GuildSettingsService _guildSettings;
+    private readonly ConcurrentDictionary<ulong, int> _messagesSent = new();
+    private readonly ConcurrentDictionary<ulong, int> _messagesSent1 = new();
 
     public AdministrationService(DiscordSocketClient client, CommandHandler cmdHandler, DbService db,
         LogCommandService logService,
