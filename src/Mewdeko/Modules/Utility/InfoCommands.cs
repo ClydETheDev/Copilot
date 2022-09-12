@@ -3,7 +3,6 @@ using Humanizer;
 using Mewdeko.Common.Attributes.TextCommands;
 using Mewdeko.Modules.Moderation.Services;
 using Mewdeko.Modules.Utility.Services;
-using Serilog.Formatting.Compact;
 using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Utility;

@@ -76,7 +76,7 @@ public abstract class MewdekoSlashCommandModule : InteractionModuleBase
         }
         finally
         {
-            if (delete)
+            if (delete && !ephemeral)
                 _ = Task.Run(async () => await msg.DeleteAsync().ConfigureAwait(false));
         }
     }

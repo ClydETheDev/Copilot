@@ -411,13 +411,29 @@ creatxtchanl:
   - ctch
 cry:
   - cry
-crypto:
-  - crypto
-  - c
 ctad:
   - ctad
 ctat:
   - ctat
+karutaeventchannel:
+  - karutaeventchannel
+  - keventchannel
+  - kec
+karutabuttontext:
+  - karutabuttontext
+  - kbuttontext
+  - kbt
+clearkarutaevent:
+  - clearkarutaevent
+  - ckarutaevent
+  - ckv
+karutaeventleaderboard:
+  - karutaeventleaderboard
+  - keventleaderboard
+  - klb
+removeevententry:
+  - removeevententry
+  - ree
 ctca:
   - ctca
 ctdm:

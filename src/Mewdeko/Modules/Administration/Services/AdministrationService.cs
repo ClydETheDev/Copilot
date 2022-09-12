@@ -1,10 +1,7 @@
 ﻿using Discord.Commands;
 using Mewdeko.Common.Collections;
-using Mewdeko.Common.PubSub;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
-using Mewdeko.Votes.Common;
-using Serilog;
 
 namespace Mewdeko.Modules.Administration.Services;
 
