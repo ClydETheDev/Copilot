@@ -1,9 +1,8 @@
-using AngleSharp;
-using AngleSharp.Html.Dom;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Configuration = AngleSharp.Configuration;
+using AngleSharp;
+using AngleSharp.Html.Dom;
 
 namespace Mewdeko.Modules.Chat_Triggers.Extensions;
 
@@ -20,7 +19,7 @@ public static class Extensions
                 if (string.IsNullOrWhiteSpace(tag))
                     return "";
 
-                var fullQueryLink = $"http://imgur.com/search?q={tag}";
+                var fullQueryLink = $"https://imgur.com/search?q={tag}";
                 var config = Configuration.Default.WithDefaultLoader();
                 using var document =
                     await BrowsingContext.New(config).OpenAsync(fullQueryLink).ConfigureAwait(false);
@@ -32,10 +31,7 @@ public static class Extensions
                 var img = elems.ElementAtOrDefault(new MewdekoRandom().Next(0, elems.Length))?.Children
                     ?.FirstOrDefault() as IHtmlImageElement;
 
-                if (img?.Source == null)
-                    return "";
-
-                return $" {img.Source.Replace("b.", ".", StringComparison.InvariantCulture)} ";
+                return img?.Source == null ? "" : $" {img.Source.Replace("b.", ".", StringComparison.InvariantCulture)} ";
             }
         }
     };
@@ -43,7 +39,7 @@ public static class Extensions
     private static string ResolveTriggerString(this string str, DiscordSocketClient client) => str.Replace("%bot.mention%", client.CurrentUser.Mention, StringComparison.Ordinal);
 
     private static async Task<string?> ResolveResponseStringAsync(this string? str, IUserMessage ctx,
-        DiscordSocketClient client, string resolvedTrigger, bool containsAnywhere)
+        DiscordSocketClient client, string resolvedTrigger, bool containsAnywhere, MewdekoContext uow = null, int triggerId = 0)
     {
         var substringIndex = resolvedTrigger.Length;
         if (containsAnywhere)
@@ -70,6 +66,7 @@ public static class Extensions
                 canMentionEveryone
                     ? ctx.Content[substringIndex..].Trim()
                     : ctx.Content[substringIndex..].Trim().SanitizeMentions(true))
+            .WithOverride("%usecount%", () => uow.CommandStats.Count(x => x.NameOrId == $"{triggerId}").ToString())
             .Build();
 
         str = rep.Replace(str);
@@ -77,16 +74,17 @@ public static class Extensions
         {
             str = await ph.Key.ReplaceAsync(str, ph.Value).ConfigureAwait(false);
         }
+
         return str;
     }
 
     public static Task<string?> ResponseWithContextAsync(this Database.Models.ChatTriggers cr, IUserMessage ctx,
-        DiscordSocketClient client, bool containsAnywhere) =>
+        DiscordSocketClient client, bool containsAnywhere, MewdekoContext context = null) =>
         cr.Response.ResolveResponseStringAsync(ctx, client, cr.Trigger.ResolveTriggerString(client),
-            containsAnywhere);
+            containsAnywhere, context, cr.Id);
 
     public static async Task<IUserMessage>? Send(this Database.Models.ChatTriggers ct, IUserMessage ctx,
-        DiscordSocketClient client, bool sanitize)
+        DiscordSocketClient client, bool sanitize, MewdekoContext dbContext = null)
     {
         var channel = ct.DmResponse
             ? await ctx.Author.CreateDMChannelAsync().ConfigureAwait(false)
@@ -114,6 +112,31 @@ public static class Extensions
                 .WithOverride("%target%", () => canMentionEveryone
                     ? ctx.Content[substringIndex..].Trim()
                     : ctx.Content[substringIndex..].Trim().SanitizeMentions(true))
+                .WithOverride("%usecount%", () => dbContext.CommandStats.Count(x => x.NameOrId == $"{ct.Id}").ToString())
+                .WithOverride("%targetuser%", () =>
+                {
+                    var mention = ctx.MentionedUserIds.FirstOrDefault();
+                    if (mention is 0)
+                        return "";
+                    var user = client.GetUserAsync(mention).GetAwaiter().GetResult();
+                    return user is null ? "" : user.Mention;
+                })
+                .WithOverride("%targetuser.id%", () =>
+                {
+                    var mention = ctx.MentionedUserIds.FirstOrDefault();
+                    if (mention is 0)
+                        return "";
+                    var user = client.GetUserAsync(mention).GetAwaiter().GetResult();
+                    return user is null ? "" : user.Id.ToString();
+                })
+                .WithOverride("%targetuser.avatar%", () =>
+                {
+                    var mention = ctx.MentionedUserIds.FirstOrDefault();
+                    if (mention is 0)
+                        return "";
+                    var user = client.GetUserAsync(mention).GetAwaiter().GetResult();
+                    return user is null ? "" : user.RealAvatarUrl().ToString();
+                })
                 .Build();
 
             SmartEmbed.TryParse(rep.Replace(ct.Response), ct.GuildId, out crembed, out plainText, out components);
@@ -122,7 +145,7 @@ public static class Extensions
 
             if (ct.CrosspostingChannelId != 0 && ct.GuildId is not null or 0)
                 await client.GetGuild(ct.GuildId ?? 0).GetTextChannel(ct.CrosspostingChannelId)
-                            .SendMessageAsync(plainText, embeds: crembed).ConfigureAwait(false);
+                    .SendMessageAsync(plainText, embeds: crembed).ConfigureAwait(false);
             else if (!ct.CrosspostingWebhookUrl.IsNullOrWhiteSpace())
             {
                 try
@@ -131,15 +154,18 @@ public static class Extensions
                     await whClient.SendMessageAsync(plainText,
                         embeds: crembed).ConfigureAwait(false);
                 }
-                catch (TaskCanceledException) { /* ignored */ }
+                catch (TaskCanceledException)
+                {
+                    /* ignored */
+                }
             }
 
             if (ct.NoRespond)
                 return null;
-            return await channel.SendMessageAsync(plainText, embeds: crembed, components:components?.Build()).ConfigureAwait(false);
+            return await channel.SendMessageAsync(plainText, embeds: crembed, components: components?.Build()).ConfigureAwait(false);
         }
 
-        var context = (await ct.ResponseWithContextAsync(ctx, client, ct.ContainsAnywhere).ConfigureAwait(false))
+        var context = (await ct.ResponseWithContextAsync(ctx, client, ct.ContainsAnywhere, dbContext).ConfigureAwait(false))
             .SanitizeMentions(sanitize);
         if (ct.CrosspostingChannelId != 0 && ct.GuildId is not null or 0)
             await client.GetGuild(ct.GuildId ?? 0).GetTextChannel(ct.CrosspostingChannelId).SendMessageAsync(context).ConfigureAwait(false);
@@ -150,35 +176,56 @@ public static class Extensions
                 using var whClient = new DiscordWebhookClient(ct.CrosspostingWebhookUrl);
                 await whClient.SendMessageAsync(context).ConfigureAwait(false);
             }
-            catch (TaskCanceledException) { /* ignored */ }
+            catch (TaskCanceledException)
+            {
+                /* ignored */
+            }
         }
+
         if (ct.NoRespond)
             return null;
         return await channel.SendMessageAsync(context).ConfigureAwait(false);
     }
 
     public static async Task<IUserMessage>? SendInteraction(this Database.Models.ChatTriggers ct, SocketInteraction inter,
-        DiscordSocketClient client, bool sanitize, IUserMessage fakeMsg, bool ephemeral = false)
+        DiscordSocketClient client, bool sanitize, IUserMessage fakeMsg, bool ephemeral = false, MewdekoContext dbContext = null)
     {
         var rep = new ReplacementBuilder()
-                  .WithDefault(inter.User, inter.Channel, (inter.Channel as ITextChannel)?.Guild as SocketGuild, client)
-                  .WithOverride("%target%", () => inter switch
-                  {
-                      IMessageCommandInteraction mData => mData.Data.Message.Content.SanitizeAllMentions(),
-                      IUserCommandInteraction uData => uData.Data.User.Mention,
-                      _ => "%target%"
-                  })
-                  .Build();
-        ct.Response = rep.Replace(ct.Response);
+            .WithDefault(inter.User, inter.Channel, (inter.Channel as ITextChannel)?.Guild as SocketGuild, client)
+            .WithOverride("%target%", () => inter switch
+            {
+                IMessageCommandInteraction mData => mData.Data.Message.Content.SanitizeAllMentions(),
+                IUserCommandInteraction uData => uData.Data.User.Mention,
+                _ => "%target%"
+            })
+            .WithOverride("%usecount%", dbContext.CommandStats.Count(x => x.NameOrId == $"{ct.Id}").ToString)
+            .WithOverride("%targetuser%", () => inter switch
+            {
+                IMessageCommandInteraction mData => $"{mData.Data.Message.Author.Mention}",
+                IUserCommandInteraction uData => $"{uData.Data.User.Mention}",
+                _ => "%targetuser%"
+            })
+            .WithOverride("%targetuser.id%", () => inter switch
+            {
+                IMessageCommandInteraction mData => $"{mData.Data.Message.Author.Id}",
+                IUserCommandInteraction uData => $"{uData.Data.User.Id}",
+                _ => "%targetuser.id%"
+            })
+            .WithOverride("%targetuser.avatar%", () => inter switch
+            {
+                IMessageCommandInteraction mData => $"{mData.Data.Message.Author.RealAvatarUrl()}",
+                IUserCommandInteraction uData => $"{uData.Data.User.RealAvatarUrl()}",
+                _ => "%targetuser.avatar%"
+            })
+            .Build();
         if (SmartEmbed.TryParse(ct.Response, ct.GuildId, out var crembed, out var plainText, out var components))
         {
-
-            SmartEmbed.TryParse(rep.Replace(ct.Response), ct.GuildId, out crembed, out plainText, out components );
+            SmartEmbed.TryParse(rep.Replace(ct.Response), ct.GuildId, out crembed, out plainText, out components);
             if (sanitize)
                 plainText = plainText.SanitizeMentions();
             if (ct.CrosspostingChannelId != 0 && ct.GuildId is not null or 0)
                 await client.GetGuild(ct.GuildId ?? 0).GetTextChannel(ct.CrosspostingChannelId)
-                            .SendMessageAsync(plainText, embeds: crembed, components: components?.Build()).ConfigureAwait(false);
+                    .SendMessageAsync(plainText, embeds: crembed, components: components?.Build()).ConfigureAwait(false);
             else if (!ct.CrosspostingWebhookUrl.IsNullOrWhiteSpace())
             {
                 try
@@ -187,15 +234,19 @@ public static class Extensions
                     await whClient.SendMessageAsync(plainText,
                         embeds: crembed).ConfigureAwait(false);
                 }
-                catch (TaskCanceledException) { /* ignored */ }
+                catch (TaskCanceledException)
+                {
+                    /* ignored */
+                }
             }
+
             if (ct.NoRespond)
                 return null;
-            await inter.RespondAsync(plainText, embeds: crembed, ephemeral:ephemeral, components:components?.Build()).ConfigureAwait(false);
+            await inter.RespondAsync(plainText, embeds: crembed, ephemeral: ephemeral, components: components?.Build()).ConfigureAwait(false);
             return await inter.GetOriginalResponseAsync().ConfigureAwait(false);
         }
 
-        var context = rep.Replace(await ct.ResponseWithContextAsync(fakeMsg, client, ct.ContainsAnywhere).ConfigureAwait(false))
+        var context = rep.Replace(await ct.ResponseWithContextAsync(fakeMsg, client, ct.ContainsAnywhere, dbContext).ConfigureAwait(false))
             .SanitizeMentions(sanitize);
         if (ct.CrosspostingChannelId != 0 && ct.GuildId is not null or 0)
             await client.GetGuild(ct.GuildId ?? 0).GetTextChannel(ct.CrosspostingChannelId).SendMessageAsync(context).ConfigureAwait(false);
@@ -206,11 +257,15 @@ public static class Extensions
                 using var whClient = new DiscordWebhookClient(ct.CrosspostingWebhookUrl);
                 await whClient.SendMessageAsync(context).ConfigureAwait(false);
             }
-            catch (TaskCanceledException) { /* ignored */ }
+            catch (TaskCanceledException)
+            {
+                /* ignored */
+            }
         }
+
         if (ct.NoRespond)
             return null;
-        await inter.RespondAsync(context, ephemeral:ephemeral).ConfigureAwait(false);
+        await inter.RespondAsync(context, ephemeral: ephemeral).ConfigureAwait(false);
         return await inter.GetOriginalResponseAsync().ConfigureAwait(false);
     }
 
@@ -223,25 +278,25 @@ public static class Extensions
             case -1:
                 return WordPosition.None;
             case 0:
-                {
-                    if (word.Length < str.Length && str.IsValidWordDivider(word.Length))
-                        return WordPosition.Start;
-                    break;
-                }
+            {
+                if (word.Length < str.Length && str.IsValidWordDivider(word.Length))
+                    return WordPosition.Start;
+                break;
+            }
             default:
+            {
+                if (wordIndex + word.Length == str.Length)
                 {
-                    if (wordIndex + word.Length == str.Length)
-                    {
-                        if (str.IsValidWordDivider(wordIndex - 1))
-                            return WordPosition.End;
-                    }
-                    else if (str.IsValidWordDivider(wordIndex - 1) && str.IsValidWordDivider(wordIndex + word.Length))
-                    {
-                        return WordPosition.Middle;
-                    }
-
-                    break;
+                    if (str.IsValidWordDivider(wordIndex - 1))
+                        return WordPosition.End;
                 }
+                else if (str.IsValidWordDivider(wordIndex - 1) && str.IsValidWordDivider(wordIndex + word.Length))
+                {
+                    return WordPosition.Middle;
+                }
+
+                break;
+            }
         }
 
         return WordPosition.None;

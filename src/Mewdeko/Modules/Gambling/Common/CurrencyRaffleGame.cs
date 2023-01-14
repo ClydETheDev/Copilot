@@ -25,16 +25,10 @@ public class CurrencyRaffleGame
             return false;
         }
 
-        if (!users.Add(new User
+        return users.Add(new User
         {
-            DiscordUser = usr,
-            Amount = amount
-        }))
-        {
-            return false;
-        }
-
-        return true;
+            DiscordUser = usr, Amount = amount
+        });
     }
 
     public User GetWinner()
@@ -65,6 +59,6 @@ public class CurrencyRaffleGame
 
         public override bool Equals(object? obj) =>
             obj is User u
-&& u.DiscordUser == DiscordUser;
+            && u.DiscordUser == DiscordUser;
     }
 }

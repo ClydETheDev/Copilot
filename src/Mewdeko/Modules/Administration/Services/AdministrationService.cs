@@ -1,7 +1,7 @@
-﻿using Discord.Commands;
+﻿using System.Threading.Tasks;
+using Discord.Commands;
 using Mewdeko.Common.Collections;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Administration.Services;
 
@@ -16,14 +16,14 @@ public class AdministrationService : INService
         GuildSettingsService guildSettings)
     {
         using var uow = db.GetDbContext();
-        var gc = uow.GuildConfigs.All().Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
+        var gc = uow.GuildConfigs.Include(x => x.DelMsgOnCmdChannels).Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
         this.db = db;
         this.logService = logService;
         this.guildSettings = guildSettings;
 
         DeleteMessagesOnCommand = new ConcurrentHashSet<ulong>(gc
-                                                               .Where(g => g.DeleteMessageOnCommand)
-                                                               .Select(g => g.GuildId));
+            .Where(g => g.DeleteMessageOnCommand)
+            .Select(g => g.GuildId));
 
         DeleteMessagesOnCommandChannels = new ConcurrentDictionary<ulong, bool>(gc
             .SelectMany(x => x.DelMsgOnCmdChannels)
@@ -31,7 +31,6 @@ public class AdministrationService : INService
             .ToConcurrent());
         cmdHandler.CommandExecuted += DelMsgOnCmd_Handler;
     }
-
 
 
     public ConcurrentHashSet<ulong> DeleteMessagesOnCommand { get; }
@@ -44,6 +43,27 @@ public class AdministrationService : INService
         gc.StaffRole = role;
         await uow.SaveChangesAsync().ConfigureAwait(false);
         guildSettings.UpdateGuildConfig(guild.Id, gc);
+    }
+
+    public async Task<bool> ToggleOptOut(IGuild guild)
+    {
+        await using var uow = db.GetDbContext();
+        var gc = await uow.ForGuildId(guild.Id, set => set);
+        gc.StatsOptOut = !gc.StatsOptOut;
+        await uow.SaveChangesAsync().ConfigureAwait(false);
+        guildSettings.UpdateGuildConfig(guild.Id, gc);
+        return gc.StatsOptOut;
+    }
+
+    public async Task<bool> DeleteStatsData(IGuild guild)
+    {
+        await using var uow = db.GetDbContext();
+        var toRemove = uow.CommandStats.Where(x => x.GuildId == guild.Id).ToList();
+        if (!toRemove.Any())
+            return false;
+        uow.CommandStats.RemoveRange(toRemove);
+        await uow.SaveChangesAsync();
+        return true;
     }
 
     public async Task MemberRoleSet(IGuild guild, ulong role)
@@ -142,7 +162,10 @@ public class AdministrationService : INService
             {
                 if (old is null)
                 {
-                    old = new DelMsgOnCmdChannel { ChannelId = chId };
+                    old = new DelMsgOnCmdChannel
+                    {
+                        ChannelId = chId
+                    };
                     conf.DelMsgOnCmdChannels.Add(old);
                 }
 

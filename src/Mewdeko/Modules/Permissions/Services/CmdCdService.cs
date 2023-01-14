@@ -1,8 +1,9 @@
-﻿using Discord.Commands;
+﻿using System.Data.Entity;
+using System.Threading.Tasks;
+using Discord.Commands;
 using Discord.Interactions;
 using Mewdeko.Common.Collections;
 using Mewdeko.Common.ModuleBehaviors;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Permissions.Services;
 
@@ -12,8 +13,8 @@ public class CmdCdService : ILateBlocker, INService
     {
         using var uow = db.GetDbContext();
         CommandCooldowns = new ConcurrentDictionary<ulong, ConcurrentHashSet<CommandCooldown>>(
-            uow.GuildConfigs.All().Where(x => client.Guilds.Select(x => x.Id)
-                                                    .Contains(x.GuildId)).ToDictionary(k => k.GuildId, v => new ConcurrentHashSet<CommandCooldown>(v.CommandCooldowns)));
+            uow.GuildConfigs.Include(x => x.CommandCooldowns).Where(x => client.Guilds.Select(socketGuild => socketGuild.Id)
+                .Contains(x.GuildId)).ToDictionary(k => k.GuildId, v => new ConcurrentHashSet<CommandCooldown>(v.CommandCooldowns)));
     }
 
     public ConcurrentDictionary<ulong, ConcurrentHashSet<CommandCooldown>> CommandCooldowns { get; }
@@ -30,6 +31,7 @@ public class CmdCdService : ILateBlocker, INService
 
         return TryBlock(guild, user, commandName);
     }
+
     public Task<bool> TryBlockLate(DiscordSocketClient client, IInteractionContext ctx,
         ICommandInfo command)
     {
@@ -47,31 +49,28 @@ public class CmdCdService : ILateBlocker, INService
 
         var cmdcds = CommandCooldowns.GetOrAdd(guild.Id, new ConcurrentHashSet<CommandCooldown>());
         CommandCooldown cdRule;
-        if ((cdRule = cmdcds.FirstOrDefault(cc => cc.CommandName == commandName)) != null)
+        if ((cdRule = cmdcds.FirstOrDefault(cc => cc.CommandName == commandName)) == null) return Task.FromResult(false);
+        var activeCdsForGuild = ActiveCooldowns.GetOrAdd(guild.Id, new ConcurrentHashSet<ActiveCooldown>());
+        if (activeCdsForGuild.FirstOrDefault(ac => ac.UserId == user.Id && ac.Command == commandName) != null)
+            return Task.FromResult(true);
+
+        activeCdsForGuild.Add(new ActiveCooldown
         {
-            var activeCdsForGuild = ActiveCooldowns.GetOrAdd(guild.Id, new ConcurrentHashSet<ActiveCooldown>());
-            if (activeCdsForGuild.FirstOrDefault(ac => ac.UserId == user.Id && ac.Command == commandName) != null)
-                return Task.FromResult(true);
+            UserId = user.Id, Command = commandName
+        });
 
-            activeCdsForGuild.Add(new ActiveCooldown
+        _ = Task.Run(async () =>
+        {
+            try
             {
-                UserId = user.Id,
-                Command = commandName
-            });
-
-            _ = Task.Run(async () =>
+                await Task.Delay(cdRule.Seconds * 1000).ConfigureAwait(false);
+                activeCdsForGuild.RemoveWhere(ac => ac.Command == commandName && ac.UserId == user.Id);
+            }
+            catch
             {
-                try
-                {
-                    await Task.Delay(cdRule.Seconds * 1000).ConfigureAwait(false);
-                    activeCdsForGuild.RemoveWhere(ac => ac.Command == commandName && ac.UserId == user.Id);
-                }
-                catch
-                {
-                    // ignored
-                }
-            });
-        }
+                // ignored
+            }
+        });
 
         return Task.FromResult(false);
     }

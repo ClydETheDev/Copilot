@@ -1,5 +1,5 @@
-﻿using Mewdeko.Common.JsonConverters;
-using System.Text.Json;
+﻿using System.Text.Json;
+using Mewdeko.Common.JsonConverters;
 
 namespace Mewdeko.Common.PubSub;
 
@@ -9,8 +9,7 @@ public class JsonSeria : ISeria
     {
         Converters =
         {
-            new Rgba32Converter(),
-            new CultureInfoConverter()
+            new Rgba32Converter(), new CultureInfoConverter()
         }
     };
 
@@ -19,9 +18,6 @@ public class JsonSeria : ISeria
 
     public T? Deserialize<T>(byte[]? data)
     {
-        if (data is null)
-            return default;
-
-        return JsonSerializer.Deserialize<T>(data, serializerOptions);
+        return data is null ? default : JsonSerializer.Deserialize<T>(data, serializerOptions);
     }
 }

@@ -1,12 +1,12 @@
-﻿using Discord.Interactions;
+﻿using System.Threading.Tasks;
+using Discord.Interactions;
 using Fergun.Interactive;
 using Fergun.Interactive.Pagination;
 using Humanizer;
+using Mewdeko.Common.Attributes.InteractionCommands;
 using Mewdeko.Modules.Utility.Common;
 using Mewdeko.Modules.Utility.Services;
 using Mewdeko.Services.Settings;
-using System.Threading.Tasks;
-using Mewdeko.Common.Attributes.InteractionCommands;
 
 namespace Mewdeko.Modules.Utility;
 
@@ -41,12 +41,12 @@ public partial class Utility
             }
 
             var msg = (await Service.GetSnipes(ctx.Guild.Id).ConfigureAwait(false)).Where(x => !x.Edited)
-                                                                                   .LastOrDefault(x => x.ChannelId == channel.Id);
+                .LastOrDefault(x => x.ChannelId == channel.Id);
 
             if (user is not null)
             {
                 msg = (await Service.GetSnipes(ctx.Guild.Id).ConfigureAwait(false)).Where(x => !x.Edited)
-                                                                                   .LastOrDefault(x => x.ChannelId == channel.Id && x.UserId == user.Id);
+                    .LastOrDefault(x => x.ChannelId == channel.Id && x.UserId == user.Id);
             }
 
             if (msg is null)
@@ -59,7 +59,10 @@ public partial class Utility
 
             var em = new EmbedBuilder
             {
-                Author = new EmbedAuthorBuilder { IconUrl = user.GetAvatarUrl(), Name = $"{user} said:" },
+                Author = new EmbedAuthorBuilder
+                {
+                    IconUrl = user.GetAvatarUrl(), Name = $"{user} said:"
+                },
                 Description = msg.Message,
                 Footer = new EmbedFooterBuilder
                 {
@@ -69,12 +72,19 @@ public partial class Utility
                 },
                 Color = Mewdeko.OkColor
             };
+
+            if (msg.ReferenceMessage is not null)
+                em.AddField("Replied To", msg.ReferenceMessage);
+
             await ctx.Interaction.RespondAsync(embed: em.Build(),
-                components: config.Data.ShowInviteButton ? new ComponentBuilder()
-                                                            .WithButton(style: ButtonStyle.Link,
-                                                                url: "https://discord.com/oauth2/authorize?client_id=752236274261426212&permissions=8&response_type=code&redirect_uri=https%3A%2F%2Fmewdeko.tech&scope=bot%20applications.commands",
-                                                                label: "Invite Me!",
-                                                                emote: "<a:HaneMeow:968564817784877066>".ToIEmote()).Build() : null).ConfigureAwait(false);
+                components: config.Data.ShowInviteButton
+                    ? new ComponentBuilder()
+                        .WithButton(style: ButtonStyle.Link,
+                            url:
+                            "https://discord.com/oauth2/authorize?client_id=752236274261426212&permissions=8&response_type=code&redirect_uri=https%3A%2F%2Fmewdeko.tech&scope=bot%20applications.commands",
+                            label: "Invite Me!",
+                            emote: "<a:HaneMeow:968564817784877066>".ToIEmote()).Build()
+                    : null).ConfigureAwait(false);
         }
 
         [SlashCommand("edited", "Snipes edited messages for the current or mentioned channel"),
@@ -89,12 +99,12 @@ public partial class Utility
             }
 
             var msg = (await Service.GetSnipes(ctx.Guild.Id).ConfigureAwait(false)).Where(x => x.Edited)
-                                                                                   .LastOrDefault(x => x.ChannelId == channel.Id);
+                .LastOrDefault(x => x.ChannelId == channel.Id);
 
             if (user is not null)
             {
                 msg = (await Service.GetSnipes(ctx.Guild.Id).ConfigureAwait(false)).Where(x => x.Edited)
-                                                                                   .LastOrDefault(x => x.ChannelId == channel.Id && x.UserId == user.Id);
+                    .LastOrDefault(x => x.ChannelId == channel.Id && x.UserId == user.Id);
             }
 
             if (msg is null)
@@ -107,7 +117,10 @@ public partial class Utility
 
             var em = new EmbedBuilder
             {
-                Author = new EmbedAuthorBuilder { IconUrl = user.GetAvatarUrl(), Name = $"{user} said:" },
+                Author = new EmbedAuthorBuilder
+                {
+                    IconUrl = user.GetAvatarUrl(), Name = $"{user} said:"
+                },
                 Description = msg.Message,
                 Footer = new EmbedFooterBuilder
                 {
@@ -117,12 +130,19 @@ public partial class Utility
                 },
                 Color = Mewdeko.OkColor
             };
+
+            if (msg.ReferenceMessage is not null)
+                em.AddField("Replied To", msg.ReferenceMessage);
+
             await ctx.Interaction.RespondAsync(embed: em.Build(),
-                components: config.Data.ShowInviteButton ? new ComponentBuilder()
-                                                            .WithButton(style: ButtonStyle.Link,
-                                                                url: "https://discord.com/oauth2/authorize?client_id=752236274261426212&permissions=8&response_type=code&redirect_uri=https%3A%2F%2Fmewdeko.tech&scope=bot%20applications.commands",
-                                                                label: "Invite Me!",
-                                                                emote: "<a:HaneMeow:968564817784877066>".ToIEmote()).Build() : null).ConfigureAwait(false);
+                components: config.Data.ShowInviteButton
+                    ? new ComponentBuilder()
+                        .WithButton(style: ButtonStyle.Link,
+                            url:
+                            "https://discord.com/oauth2/authorize?client_id=752236274261426212&permissions=8&response_type=code&redirect_uri=https%3A%2F%2Fmewdeko.tech&scope=bot%20applications.commands",
+                            label: "Invite Me!",
+                            emote: "<a:HaneMeow:968564817784877066>".ToIEmote()).Build()
+                    : null).ConfigureAwait(false);
         }
 
         [SlashCommand("deletedlist", "Lists the last 5 delete snipes unless specified otherwise."),
@@ -137,7 +157,7 @@ public partial class Utility
             }
 
             var msgs = (await Service.GetSnipes(ctx.Guild.Id).ConfigureAwait(false))
-                              .Where(x => x.ChannelId == ctx.Channel.Id && !x.Edited);
+                .Where(x => x.ChannelId == ctx.Channel.Id && !x.Edited);
             {
                 var snipeStores = msgs as SnipeStore[] ?? msgs.ToArray();
                 if (snipeStores.Length == 0)
@@ -148,11 +168,11 @@ public partial class Utility
 
                 var msg = snipeStores.OrderByDescending(d => d.DateAdded).Where(x => !x.Edited).Take(amount);
                 var paginator = new LazyPaginatorBuilder().AddUser(ctx.User).WithPageFactory(PageFactory)
-                                                          .WithFooter(
-                                                              PaginatorFooter.PageNumber | PaginatorFooter.Users)
-                                                          .WithMaxPageIndex(msg.Count() - 1).WithDefaultEmotes()
-            .WithActionOnCancellation(ActionOnStop.DeleteMessage)
-                                                          .Build();
+                    .WithFooter(
+                        PaginatorFooter.PageNumber | PaginatorFooter.Users)
+                    .WithMaxPageIndex(msg.Count() - 1).WithDefaultEmotes()
+                    .WithActionOnCancellation(ActionOnStop.DeleteMessage)
+                    .Build();
 
                 await interactivity.SendPaginatorAsync(paginator, (ctx.Interaction as SocketInteraction)!, TimeSpan.FromMinutes(60)).ConfigureAwait(false);
 
@@ -162,12 +182,17 @@ public partial class Utility
                     var user = await ctx.Channel.GetUserAsync(msg1.UserId).ConfigureAwait(false)
                                ?? await client.Rest.GetUserAsync(msg1.UserId).ConfigureAwait(false);
 
-                    return new PageBuilder().WithOkColor()
-                                                            .WithAuthor(new EmbedAuthorBuilder()
-                                                                        .WithIconUrl(user.RealAvatarUrl().AbsoluteUri)
-                                                                        .WithName($"{user} said:"))
-                                                            .WithDescription(
-                                                                $"{msg1.Message}\n\nMessage deleted {(DateTime.UtcNow - msg1.DateAdded).Humanize()} ago");
+                    var builder = new PageBuilder().WithOkColor()
+                        .WithAuthor(new EmbedAuthorBuilder()
+                            .WithIconUrl(user.RealAvatarUrl().AbsoluteUri)
+                            .WithName($"{user} said:"))
+                        .WithDescription(
+                            $"{msg1.Message}\n\nMessage deleted {(DateTime.UtcNow - msg1.DateAdded).Humanize()} ago");
+
+                    if (msg1.ReferenceMessage is not null)
+                        builder.AddField("Replied To", msg1.ReferenceMessage);
+
+                    return builder;
                 }
             }
         }
@@ -184,7 +209,7 @@ public partial class Utility
             }
 
             var msgs = (await Service.GetSnipes(ctx.Guild.Id).ConfigureAwait(false))
-                              .Where(x => x.ChannelId == ctx.Channel.Id && x.Edited);
+                .Where(x => x.ChannelId == ctx.Channel.Id && x.Edited);
             {
                 var snipeStores = msgs as SnipeStore[] ?? msgs.ToArray();
                 if (snipeStores.Length == 0)
@@ -195,11 +220,11 @@ public partial class Utility
 
                 var msg = snipeStores.OrderByDescending(d => d.DateAdded).Where(x => x.Edited).Take(amount);
                 var paginator = new LazyPaginatorBuilder().AddUser(ctx.User).WithPageFactory(PageFactory)
-                                                          .WithFooter(
-                                                              PaginatorFooter.PageNumber | PaginatorFooter.Users)
-                                                          .WithMaxPageIndex(msg.Count() - 1).WithDefaultEmotes()
-            .WithActionOnCancellation(ActionOnStop.DeleteMessage)
-                                                          .Build();
+                    .WithFooter(
+                        PaginatorFooter.PageNumber | PaginatorFooter.Users)
+                    .WithMaxPageIndex(msg.Count() - 1).WithDefaultEmotes()
+                    .WithActionOnCancellation(ActionOnStop.DeleteMessage)
+                    .Build();
 
                 await interactivity.SendPaginatorAsync(paginator, (ctx.Interaction as SocketInteraction)!, TimeSpan.FromMinutes(60)).ConfigureAwait(false);
 
@@ -209,12 +234,17 @@ public partial class Utility
                     var user = await ctx.Channel.GetUserAsync(msg1.UserId).ConfigureAwait(false)
                                ?? await client.Rest.GetUserAsync(msg1.UserId).ConfigureAwait(false);
 
-                    return new PageBuilder().WithOkColor()
-                                                            .WithAuthor(new EmbedAuthorBuilder()
-                                                                        .WithIconUrl(user.RealAvatarUrl().AbsoluteUri)
-                                                                        .WithName($"{user} said:"))
-                                                            .WithDescription(
-                                                                $"{msg1.Message}\n\nMessage deleted {(DateTime.UtcNow - msg1.DateAdded).Humanize()} ago");
+                    var builder = new PageBuilder().WithOkColor()
+                        .WithAuthor(new EmbedAuthorBuilder()
+                            .WithIconUrl(user.RealAvatarUrl().AbsoluteUri)
+                            .WithName($"{user} said:"))
+                        .WithDescription(
+                            $"{msg1.Message}\n\nMessage deleted {(DateTime.UtcNow - msg1.DateAdded).Humanize()} ago");
+
+                    if (msg1.ReferenceMessage is not null)
+                        builder.AddField("Replied To", msg1.ReferenceMessage);
+
+                    return builder;
                 }
             }
         }

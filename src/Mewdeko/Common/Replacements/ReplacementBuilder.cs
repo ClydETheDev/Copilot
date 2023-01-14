@@ -1,7 +1,7 @@
-﻿using Discord.Commands;
+﻿using System.Text.RegularExpressions;
+using Discord.Commands;
 using Mewdeko.Modules.Administration.Services;
 using NekosBestApiNet;
-using System.Text.RegularExpressions;
 
 namespace Mewdeko.Common.Replacements;
 
@@ -35,7 +35,6 @@ public class ReplacementBuilder
 
     public ReplacementBuilder WithClient(DiscordSocketClient socketClient)
     {
-
         /*OBSOLETE*/
         reps.TryAdd("%shardid%", () => socketClient.ShardId.ToString());
         reps.TryAdd("%time%",
@@ -81,7 +80,7 @@ public class ReplacementBuilder
         reps.TryAdd("%time.year%", () => DateTime.UtcNow.ToString("yyyy"));
         reps.TryAdd("%server.icon%", () => g == null ? "DM" : $"{g.IconUrl}?size=2048");
         reps.TryAdd("%server.id%", () => g == null ? "DM" : g.Id.ToString());
-        reps.TryAdd("%server.name%", () => g == null ? "DM" : g.Name.EscapeQuotes());
+        reps.TryAdd("%server.name%", () => g == null ? "DM" : g.Name.EscapeWeirdStuff());
         reps.TryAdd("%server.boostlevel%", () =>
         {
             var e = g.PremiumTier.ToString();
@@ -201,6 +200,7 @@ public class ReplacementBuilder
         reps.TryAdd("%winkgif%", () => nekosBestApi.ActionsApi.Wink().GetAwaiter().GetResult().Results.First().Url);
         return this;
     }
+
     public ReplacementBuilder WithChannel(IMessageChannel? ch)
     {
         /*OBSOLETE*/
@@ -209,17 +209,20 @@ public class ReplacementBuilder
         reps.TryAdd("%cid%", () => ch?.Id.ToString());
         /*NEW*/
         reps.TryAdd("%channel.mention%", () => (ch as ITextChannel)?.Mention ?? $"#{ch.Name}");
-        reps.TryAdd("%channel.name%", () => ch.Name.EscapeQuotes());
+        reps.TryAdd("%channel.name%", () => ch.Name.EscapeWeirdStuff());
         reps.TryAdd("%channel.id%", () => ch.Id.ToString());
         reps.TryAdd("%channel.created%", () => ch.CreatedAt.ToString("HH:mm dd.MM.yyyy"));
         reps.TryAdd("%channel.nsfw%", () => (ch as ITextChannel)?.IsNsfw.ToString() ?? "-");
-        reps.TryAdd("%channel.topic%", () => (ch as ITextChannel)?.Topic.EscapeQuotes() ?? "-");
+        reps.TryAdd("%channel.topic%", () => (ch as ITextChannel)?.Topic.EscapeWeirdStuff() ?? "-");
         return this;
     }
 
     public ReplacementBuilder WithUser(IUser user)
     {
-        WithManyUsers(new[] { user });
+        WithManyUsers(new[]
+        {
+            user
+        });
         return this;
     }
 
@@ -227,8 +230,8 @@ public class ReplacementBuilder
     {
         /*OBSOLETE*/
         reps.TryAdd("%user%", () => string.Join(" ", users.Select(user => user.Mention)));
-        reps.TryAdd("%userfull%", () => string.Join(" ", users.Select(user => user.ToString().EscapeQuotes())));
-        reps.TryAdd("%username%", () => string.Join(" ", users.Select(user => user.Username.EscapeQuotes())));
+        reps.TryAdd("%userfull%", () => string.Join(" ", users.Select(user => user.ToString().EscapeWeirdStuff())));
+        reps.TryAdd("%username%", () => string.Join(" ", users.Select(user => user.Username.EscapeWeirdStuff())));
         reps.TryAdd("%userdiscrim%", () => string.Join(" ", users.Select(user => user.Discriminator)));
         reps.TryAdd("%useravatar%",
             () => string.Join(" ", users.Select(user => user.RealAvatarUrl().ToString())));
@@ -236,8 +239,8 @@ public class ReplacementBuilder
         reps.TryAdd("%uid%", () => string.Join(" ", users.Select(user => user.Id.ToString())));
         /*NEW*/
         reps.TryAdd("%user.mention%", () => string.Join(" ", users.Select(user => user.Mention)));
-        reps.TryAdd("%user.fullname%", () => string.Join(" ", users.Select(user => user.ToString().EscapeQuotes())));
-        reps.TryAdd("%user.name%", () => string.Join(" ", users.Select(user => user.Username.EscapeQuotes())));
+        reps.TryAdd("%user.fullname%", () => string.Join(" ", users.Select(user => user.ToString().EscapeWeirdStuff())));
+        reps.TryAdd("%user.name%", () => string.Join(" ", users.Select(user => user.Username.EscapeWeirdStuff())));
         reps.TryAdd("%user.banner%",
             () => string.Join(" ",
                 users.Select(async user => (await client.Rest.GetUserAsync(user.Id).ConfigureAwait(false)).GetBannerUrl(size: 2048))));

@@ -1,4 +1,5 @@
-﻿using CommandLine;
+﻿using System.Threading.Tasks;
+using CommandLine;
 using Discord.Commands;
 using Discord.Interactions;
 using Mewdeko.Common.Attributes.TextCommands;
@@ -9,8 +10,6 @@ using Mewdeko.Modules.Permissions.Services;
 using Mewdeko.Services.Settings;
 using Mewdeko.Services.strings;
 using MoreLinq;
-using System.Threading.Tasks;
-using Serilog;
 
 namespace Mewdeko.Modules.Help.Services;
 
@@ -64,8 +63,8 @@ public class HelpService : ILateExecutor, INService
         var selMenu = new SelectMenuBuilder().WithCustomId("helpselect");
         foreach (var i in modules.Where(x => !x.Attributes.Any(attribute => attribute is HelpDisabled)))
         {
-                selMenu.Options.Add(new SelectMenuOptionBuilder().WithEmote(GetSelectEmote(i.Name.ToLower()).ToIEmote() ?? "<a:HaneMeow:968564817784877066>".ToIEmote())
-                    .WithLabel(i.Name).WithDescription(GetText($"module_description_{i.Name.ToLower()}", guild)).WithValue(i.Name.ToLower()));
+            selMenu.Options.Add(new SelectMenuOptionBuilder()
+                .WithLabel(i.Name).WithDescription(GetText($"module_description_{i.Name.ToLower()}", guild)).WithValue(i.Name.ToLower()));
         }
 
         compBuilder.WithButton("Toggle Descriptions", $"toggle-descriptions:{descriptions},{user.Id}");
@@ -99,7 +98,8 @@ public class HelpService : ILateExecutor, INService
         {
             foreach (var i in modules.Batch(modules.Count() / 2))
             {
-                embed.AddField(count == 0 ? "Categories" : "_ _", string.Join("\n", i.Select(x => $"> {CheckEnabled(guild?.Id, channel, user, x.Name).GetAwaiter().GetResult()} {Format.Bold(x.Name)}")), true);
+                embed.AddField(count == 0 ? "Categories" : "_ _",
+                    string.Join("\n", i.Select(x => $"> {CheckEnabled(guild?.Id, channel, user, x.Name).GetAwaiter().GetResult()} {Format.Bold(x.Name)}")), true);
                 count++;
             }
         }
@@ -118,7 +118,7 @@ public class HelpService : ILateExecutor, INService
 
     public string? GetModuleDescription(string module, IGuild? guild) => GetText($"module_description_{module.ToLower()}", guild);
 
-    public Task LateExecute(DiscordSocketClient client, IGuild? guild, IUserMessage msg)
+    public Task LateExecute(DiscordSocketClient discordSocketClient, IGuild? guild, IUserMessage msg)
     {
         var settings = bss.Data;
         if (guild != null) return Task.CompletedTask;
@@ -126,38 +126,9 @@ public class HelpService : ILateExecutor, INService
             return Task.CompletedTask;
 
         return SmartEmbed.TryParse(settings.DmHelpText, null, out var embed, out var plainText, out var components)
-            ? msg.Channel.SendMessageAsync(plainText, embeds: embed, components:components.Build())
+            ? msg.Channel.SendMessageAsync(plainText, embeds: embed, components: components.Build())
             : msg.Channel.SendMessageAsync(settings.DmHelpText);
     }
-
-    public string GetSelectEmote(string module)
-        => module switch
-        {
-            "administration" => bss.Data.AdministrationEmote,
-            "afk" => bss.Data.HelpEmote,
-            "chattriggers" => bss.Data.ChatTriggersEmote,
-            "confessions" => bss.Data.ConfessionsEmote,
-            "games" =>  bss.Data.GamesEmote,
-            "gambling" =>  bss.Data.GamblingEmote,
-            "giveaways" =>  bss.Data.GiveawaysEmote,
-            "help" =>  bss.Data.HelpEmote,
-            "highlights" =>  bss.Data.HighlightsEmote,
-            "multigreets" => bss.Data.MultiGreetsEmote,
-            "music" =>  bss.Data.MusicEmote,
-            "nsfw" =>  bss.Data.NsfwEmote,
-            "owneronly" => bss.Data.OwnerOnlyEmote,
-            "permissions" => bss.Data.PermissionsEmote,
-            "rolegreets" => bss.Data.RoleGreetsEmote,
-            "searches" => bss.Data.SearchesEmote,
-            "starboard" => bss.Data.StarboardEmote,
-            "servermanagement" => bss.Data.ServerManagementEmote,
-            "suggestions" => bss.Data.SuggestionsEmote,
-            "userprofile" => bss.Data.UserProfileEmote,
-            "utility" => bss.Data.UtilityEmote,
-            "vote" => bss.Data.VoteEmote,
-            "xp" => bss.Data.XpEmote,
-            _ => "<a:HaneMeow:941348630927925318>"
-        };
 
     private Task HandlePing(SocketMessage msg)
     {
@@ -215,7 +186,7 @@ public class HelpService : ILateExecutor, INService
         var str = $"**{prefix + com.Aliases[0]}**";
         var alias = com.Aliases.Skip(1).FirstOrDefault();
         if (alias != null)
-            str += $" **/{prefix + alias}**";
+            str += $" **| {prefix + alias}**";
         var em = new EmbedBuilder().AddField(fb =>
             fb.WithName(str).WithValue($"{com.RealSummary(strings, guild.Id, prefix)}").WithIsInline(true));
 
@@ -243,12 +214,13 @@ public class HelpService : ILateExecutor, INService
             else if (guildCommand is not null)
                 em.AddField("Slash Command", potentialCommand == null ? "`None`" : $"</{potentialCommand.Module.SlashGroupName} {potentialCommand.Name}:{guildCommand.Id}>");
         }
+
         em.AddField(fb => fb.WithName(GetText("usage", guild)).WithValue(string.Join("\n",
-                                Array.ConvertAll(com.RealRemarksArr(strings, guild?.Id, prefix),
-                                    arg => Format.Code(arg))))
-                            .WithIsInline(false))
-          .WithFooter($"Module: {com.Module.GetTopLevelModule().Name} || Submodule: {com.Module.Name.Replace("Commands", "")} || Method Name: {com.MethodName()}")
-          .WithColor(Mewdeko.OkColor);
+                    Array.ConvertAll(com.RealRemarksArr(strings, guild?.Id, prefix),
+                        arg => Format.Code(arg))))
+                .WithIsInline(false))
+            .WithFooter($"Module: {com.Module.GetTopLevelModule().Name} || Submodule: {com.Module.Name.Replace("Commands", "")} || Method Name: {com.MethodName()}")
+            .WithColor(Mewdeko.OkColor);
 
         var opt = ((MewdekoOptionsAttribute)com.Attributes.FirstOrDefault(x => x is MewdekoOptionsAttribute))
             ?.OptionType;
@@ -269,17 +241,17 @@ public class HelpService : ILateExecutor, INService
 
     public static List<string> GetCommandOptionHelpList(Type opt) =>
         opt.GetProperties()
-           .Select(x => Array.Find(x.GetCustomAttributes(true), a => a is OptionAttribute))
-           .Where(x => x != null).Cast<OptionAttribute>().Select(x =>
-           {
-               var toReturn = $"`--{x.LongName}`";
+            .Select(x => Array.Find(x.GetCustomAttributes(true), a => a is OptionAttribute))
+            .Where(x => x != null).Cast<OptionAttribute>().Select(x =>
+            {
+                var toReturn = $"`--{x.LongName}`";
 
-               if (!string.IsNullOrWhiteSpace(x.ShortName))
-                   toReturn += $" (`-{x.ShortName}`)";
+                if (!string.IsNullOrWhiteSpace(x.ShortName))
+                    toReturn += $" (`-{x.ShortName}`)";
 
-               toReturn += $"   {x.HelpText}  ";
-               return toReturn;
-           }).ToList();
+                toReturn += $"   {x.HelpText}  ";
+                return toReturn;
+            }).ToList();
 
     public static string[] GetCommandRequirements(CommandInfo cmd, GuildPermission? overrides = null)
     {

@@ -1,3 +1,9 @@
+using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using GTranslate.Translators;
@@ -12,12 +18,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using System.Diagnostics;
-using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using Color = SixLabors.ImageSharp.Color;
 using Image = SixLabors.ImageSharp.Image;
 
@@ -72,7 +72,7 @@ public class SearchesService : INService, IUnloadableService
         this.creds = creds;
         rng = new MewdekoRandom();
         using var uow = db.GetDbContext();
-        var gc = uow.GuildConfigs.All().Where(x => client.Guilds.Select(x => x.Id).Contains(x.GuildId));
+        var gc = uow.GuildConfigs.Include(x => x.NsfwBlacklistedTags).Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
         blacklistedTags = new ConcurrentDictionary<ulong, HashSet<string>>(
             gc.ToDictionary(
                 x => x.GuildId,
@@ -108,6 +108,7 @@ public class SearchesService : INService, IUnloadableService
                         text = await AutoTranslate(umsg.Resolve(TagHandling.Ignore), split[0], split[1])
                             .ConfigureAwait(false);
                     }
+
                     if (autoDelete)
                     {
                         try
@@ -121,8 +122,8 @@ public class SearchesService : INService, IUnloadableService
                     }
 
                     await umsg.Channel.SendConfirmAsync(
-                                  $"{umsg.Author.Mention} `:` {text.Replace("<@ ", "<@", StringComparison.InvariantCulture).Replace("<@! ", "<@!", StringComparison.InvariantCulture)}")
-                              .ConfigureAwait(false);
+                            $"{umsg.Author.Mention} `:` {text.Replace("<@ ", "<@", StringComparison.InvariantCulture).Replace("<@! ", "<@!", StringComparison.InvariantCulture)}")
+                        .ConfigureAwait(false);
                 }
                 catch
                 {
@@ -181,6 +182,12 @@ public class SearchesService : INService, IUnloadableService
         imageCacher.Clear();
         return Task.CompletedTask;
     }
+
+    public async Task SetShip(ulong user1, ulong user2, int score)
+        => await cache.SetShip(user1, user2, score);
+
+    public async Task<ShipCache?> GetShip(ulong user1, ulong user2)
+        => await cache.GetShip(user1, user2);
 
     public async Task<Stream> GetRipPictureAsync(string text, Uri imgUrl)
     {
@@ -366,11 +373,11 @@ public class SearchesService : INService, IUnloadableService
 
         if (guild.HasValue)
         {
-            var blacklistedTags = GetBlacklistedTags(guild.Value);
+            var hashSet = GetBlacklistedTags(guild.Value);
 
             var cacher = imageCacher.GetOrAdd(guild.Value, _ => new SearchImageCacher(httpFactory));
 
-            return cacher.GetImage(tags, isExplicit, type, blacklistedTags);
+            return cacher.GetImage(tags, isExplicit, type, hashSet);
         }
         else
         {
@@ -382,9 +389,7 @@ public class SearchesService : INService, IUnloadableService
 
     public HashSet<string> GetBlacklistedTags(ulong guildId)
     {
-        if (blacklistedTags.TryGetValue(guildId, out var tags))
-            return tags;
-        return new HashSet<string>();
+        return blacklistedTags.TryGetValue(guildId, out var tags) ? tags : new HashSet<string>();
     }
 
     public async Task<bool> ToggleBlacklistedTag(ulong guildId, string tag)
@@ -454,7 +459,10 @@ public class SearchesService : INService, IUnloadableService
     {
         using var http = httpFactory.CreateClient();
         var res = await http.GetStringAsync("https://official-joke-api.appspot.com/random_joke").ConfigureAwait(false);
-        var resObj = JsonConvert.DeserializeAnonymousType(res, new { setup = "", punchline = "" });
+        var resObj = JsonConvert.DeserializeAnonymousType(res, new
+        {
+            setup = "", punchline = ""
+        });
         return (resObj.setup, resObj.punchline);
     }
 
@@ -485,7 +493,7 @@ public class SearchesService : INService, IUnloadableService
             try
             {
                 storeUrl = await google.ShortenUrl(
-                                            $"https://shop.tcgplayer.com/productcatalog/product/show?newSearch=false&ProductType=All&IsProductNameExact=false&ProductName={Uri.EscapeDataString(card.Name)}")
+                        $"https://shop.tcgplayer.com/productcatalog/product/show?newSearch=false&ProductType=All&IsProductNameExact=false&ProductName={Uri.EscapeDataString(card.Name)}")
                     .ConfigureAwait(false);
             }
             catch
@@ -519,12 +527,7 @@ public class SearchesService : INService, IUnloadableService
             return Array.Empty<MtgData>();
 
         var tasks = new List<Task<MtgData>>(cards.Length);
-        for (var i = 0; i < cards.Length; i++)
-        {
-            var card = cards[i];
-
-            tasks.Add(GetMtgDataAsync(card));
-        }
+        tasks.AddRange(cards.Select(GetMtgDataAsync));
 
         return await Task.WhenAll(tasks).ConfigureAwait(false);
     }
@@ -546,7 +549,7 @@ public class SearchesService : INService, IUnloadableService
         try
         {
             var response = await http.GetStringAsync(
-                                         $"https://omgvamp-hearthstone-v1.p.rapidapi.com/cards/search/{Uri.EscapeDataString(name)}")
+                    $"https://omgvamp-hearthstone-v1.p.rapidapi.com/cards/search/{Uri.EscapeDataString(name)}")
                 .ConfigureAwait(false);
             var objs = JsonConvert.DeserializeObject<HearthstoneCardData[]>(response);
             if (objs == null || objs.Length == 0)
@@ -596,9 +599,9 @@ public class SearchesService : INService, IUnloadableService
     public async Task<int> GetSteamAppIdByName(string query)
     {
         var redis = cache.Redis;
-        var db = redis.GetDatabase();
+        var redisDb = redis.GetDatabase();
         const string steamGameIdsKey = "steam_names_to_appid";
-        await db.KeyExistsAsync(steamGameIdsKey).ConfigureAwait(false);
+        await redisDb.KeyExistsAsync(steamGameIdsKey).ConfigureAwait(false);
 
         // if we didn't get steam name to id map already, get it
         //if (!exists)
@@ -620,15 +623,21 @@ public class SearchesService : INService, IUnloadableService
             using var http = httpFactory.CreateClient();
             // https://api.steampowered.com/ISteamApps/GetAppList/v2/
             var gamesStr = await http.GetStringAsync("https://api.steampowered.com/ISteamApps/GetAppList/v2/")
-                                     .ConfigureAwait(false);
+                .ConfigureAwait(false);
             var apps = JsonConvert
-                       .DeserializeAnonymousType(gamesStr, new { applist = new { apps = new List<SteamGameId>() } })
-                       .applist.apps;
+                .DeserializeAnonymousType(gamesStr, new
+                {
+                    applist = new
+                    {
+                        apps = new List<SteamGameId>()
+                    }
+                })
+                .applist.apps;
 
             return apps
-                   .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-                   .GroupBy(x => x.Name)
-                   .ToDictionary(x => x.Key, x => x.First().AppId);
+                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                .GroupBy(x => x.Name)
+                .ToDictionary(x => x.Key, x => x.First().AppId);
             //await db.HashSetAsync("steam_game_ids", apps.Select(app => new HashEntry(app.Name.Trim().ToLowerInvariant(), app.AppId)).ToArray()).ConfigureAwait(false);
             //await db.StringSetAsync("steam_game_ids", gamesStr, TimeSpan.FromHours(24));
             //await db.KeyExpireAsync("steam_game_ids", TimeSpan.FromHours(24), CommandFlags.FireAndForget).ConfigureAwait(false);
@@ -723,6 +732,7 @@ public class SearchesService : INService, IUnloadableService
             fullQueryLink,
             totalResults);
     }
+
     public async Task<GoogleSearchResultData?> DuckDuckGoSearchAsync(string query)
     {
         query = WebUtility.UrlEncode(query)?.Replace(' ', '+');
@@ -735,7 +745,9 @@ public class SearchesService : INService, IUnloadableService
 
         using var formData = new MultipartFormDataContent
         {
-            { new StringContent(query), "q" }
+            {
+                new StringContent(query), "q"
+            }
         };
         using var response = await http.PostAsync(fullQueryLink, formData).ConfigureAwait(false);
         var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
@@ -814,9 +826,11 @@ public class GoogleSearchResultData
 
 public class SteamGameId
 {
-    [JsonProperty("name")] public string Name { get; set; }
+    [JsonProperty("name")]
+    public string Name { get; set; }
 
-    [JsonProperty("appid")] public int AppId { get; set; }
+    [JsonProperty("appid")]
+    public int AppId { get; set; }
 }
 
 public class SteamGameData
@@ -825,9 +839,11 @@ public class SteamGameData
 
     public class Container
     {
-        [JsonProperty("success")] public bool Success { get; set; }
+        [JsonProperty("success")]
+        public bool Success { get; set; }
 
-        [JsonProperty("data")] public SteamGameData Data { get; set; }
+        [JsonProperty("data")]
+        public SteamGameData Data { get; set; }
     }
 }
 
@@ -837,4 +853,11 @@ public enum TimeErrors
     ApiKeyMissing,
     NotFound,
     Unknown
+}
+
+public class ShipCache
+{
+    public ulong User1 { get; set; }
+    public ulong User2 { get; set; }
+    public int Score { get; set; }
 }

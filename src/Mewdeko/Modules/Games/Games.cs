@@ -1,16 +1,16 @@
-﻿using Discord.Commands;
+﻿using System.Threading.Tasks;
+using Discord.Commands;
 using Mewdeko.Common.Attributes.TextCommands;
 using Mewdeko.Modules.Games.Services;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Games;
+
 public partial class Games : MewdekoModuleBase<GamesService>
 {
-    private readonly IImageCache images;
-    private readonly Random rng = new();
+    private readonly MewdekoRandom rng = new();
     private readonly MewdekoContext db;
 
-    public Games(IDataCache data, DbService db) => (images, this.db) = (data.LocalImages, db.GetDbContext());
+    public Games(IDataCache data, DbService db) => (_, this.db) = (data.LocalImages, db.GetDbContext());
 
     [Cmd, Aliases]
     public async Task Choose([Remainder] string? list = null)
@@ -20,7 +20,6 @@ public partial class Games : MewdekoModuleBase<GamesService>
         var listArr = list.Split(';');
         if (listArr.Length < 2)
             return;
-        var rng = new MewdekoRandom();
         await ctx.Channel.SendConfirmAsync("🤔", listArr[rng.Next(0, listArr.Length)]).ConfigureAwait(false);
     }
 
@@ -55,8 +54,7 @@ public partial class Games : MewdekoModuleBase<GamesService>
         await ReplyErrorLocalizedAsync("dragon_goes_suk");
     }
 
-    private double NextDouble(double x, double y) => (rng.NextDouble() * (y - x)) + x;
-
+    // funny command
     [Cmd, Aliases]
     public async Task Linux(string guhnoo, string loonix) =>
         await ctx.Channel.SendConfirmAsync(

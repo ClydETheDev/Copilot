@@ -1,8 +1,8 @@
-﻿using Mewdeko.Services.Settings;
+﻿using System.Reflection;
+using Mewdeko.Services.Settings;
 using Mewdeko.Services.strings;
 using Mewdeko.Services.strings.impl;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
 namespace Mewdeko.Extensions;
 
@@ -13,13 +13,13 @@ public static class ServiceCollectionExtensions
         if (shardCount == 1)
         {
             return services.AddSingleton<IStringsSource, LocalFileStringsSource>()
-                           .AddSingleton<IBotStringsProvider, LocalBotStringsProvider>()
-                           .AddSingleton<IBotStrings, BotStrings>();
+                .AddSingleton<IBotStringsProvider, LocalBotStringsProvider>()
+                .AddSingleton<IBotStrings, BotStrings>();
         }
 
         return services.AddSingleton<IStringsSource, LocalFileStringsSource>()
-                       .AddSingleton<IBotStringsProvider, RedisBotStringsProvider>()
-                       .AddSingleton<IBotStrings, BotStrings>();
+            .AddSingleton<IBotStringsProvider, RedisBotStringsProvider>()
+            .AddSingleton<IBotStrings, BotStrings>();
     }
 
     public static IServiceCollection AddConfigServices(this IServiceCollection services)
@@ -28,11 +28,9 @@ public static class ServiceCollectionExtensions
 
         foreach (var type in Assembly.GetCallingAssembly().ExportedTypes.Where(x => x.IsSealed))
         {
-            if (type.BaseType?.IsGenericType == true && type.BaseType.GetGenericTypeDefinition() == baseType)
-            {
-                services.AddSingleton(type);
-                services.AddSingleton(x => (IConfigService)x.GetRequiredService(type));
-            }
+            if (type.BaseType?.IsGenericType != true || type.BaseType.GetGenericTypeDefinition() != baseType) continue;
+            services.AddSingleton(type);
+            services.AddSingleton(x => (IConfigService)x.GetRequiredService(type));
         }
 
         return services;

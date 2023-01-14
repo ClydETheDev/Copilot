@@ -1,11 +1,12 @@
-﻿using Discord.Commands;
+﻿using System.Threading.Tasks;
+using Discord.Commands;
 using Mewdeko.Common.Collections;
 using Mewdeko.Common.DiscordImplementations;
 using Mewdeko.Modules.Permissions.Common;
 using Mewdeko.Modules.Permissions.Services;
+using Mewdeko.Services.Settings;
 using Mewdeko.Services.strings;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Utility.Services;
 
@@ -17,24 +18,26 @@ public class VerboseErrorsService : INService, IUnloadableService
     private readonly ConcurrentHashSet<ulong> guildsEnabled;
     private readonly GuildSettingsService guildSettings;
     private readonly IServiceProvider services;
+    private readonly BotConfigService botConfigService;
 
     public VerboseErrorsService(DiscordSocketClient client, DbService db, CommandHandler ch,
         IBotStrings strings,
         GuildSettingsService guildSettings,
-        IServiceProvider services)
+        IServiceProvider services, BotConfigService botConfigService)
     {
         this.strings = strings;
         this.guildSettings = guildSettings;
         this.services = services;
+        this.botConfigService = botConfigService;
         this.db = db;
         this.ch = ch;
         using var uow = db.GetDbContext();
-        var gc = uow.GuildConfigs.All().Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
+        var gc = uow.GuildConfigs.Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
         this.ch.CommandErrored += LogVerboseError;
 
         guildsEnabled = new ConcurrentHashSet<ulong>(gc
-                                                        .Where(x => x.VerboseErrors)
-                                                        .Select(x => x.GuildId));
+            .Where(x => x.VerboseErrors)
+            .Select(x => x.GuildId));
     }
 
     public Task Unload()
@@ -53,9 +56,11 @@ public class VerboseErrorsService : INService, IUnloadableService
         {
             if (!(pc.Permissions != null
                   && pc.Permissions.CheckPermissions(new MewdekoUserMessage
-                          { Author = user, Channel = channel },
+                      {
+                          Author = user, Channel = channel
+                      },
                       i,
-                      cmd.MethodName(), out var index)))
+                      cmd.MethodName(), out _)))
                 return;
         }
 
@@ -69,8 +74,11 @@ public class VerboseErrorsService : INService, IUnloadableService
                 .WithFooter($"Run {await guildSettings.GetPrefix(channel.Guild.Id)}ve to disable these prompts.")
                 .WithErrorColor();
 
-            await channel.SendMessageAsync(embed: embed.Build(), components: new ComponentBuilder()
-                                                                              .WithButton(label: "Support Server", style: ButtonStyle.Link, url: "https://discord.gg/mewdeko").Build()).ConfigureAwait(false);
+            if (!botConfigService.Data.ShowInviteButton)
+                await channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+            else
+                await channel.SendMessageAsync(embed: embed.Build(), components: new ComponentBuilder()
+                    .WithButton(label: "Support Server", style: ButtonStyle.Link, url: botConfigService.Data.SupportServer).Build()).ConfigureAwait(false);
         }
         catch
         {

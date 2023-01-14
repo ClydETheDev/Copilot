@@ -1,6 +1,6 @@
-﻿using Mewdeko.Modules.Xp.Common;
+﻿using System.Threading.Tasks;
+using Mewdeko.Modules.Xp.Common;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Administration.Services;
 
@@ -35,9 +35,7 @@ public class SelfAssignedRolesService : INService
 
         uow.SelfAssignableRoles.Add(new SelfAssignedRole
         {
-            Group = group,
-            RoleId = role.Id,
-            GuildId = role.Guild.Id
+            Group = group, RoleId = role.Id, GuildId = role.Guild.Id
         });
         await uow.SaveChangesAsync().ConfigureAwait(false);
 
@@ -85,17 +83,15 @@ public class SelfAssignedRolesService : INService
             foreach (var roleId in sameRoles)
             {
                 var sameRole = guildUser.Guild.GetRole(roleId);
-                if (sameRole != null)
+                if (sameRole == null) continue;
+                try
                 {
-                    try
-                    {
-                        await guildUser.RemoveRoleAsync(sameRole).ConfigureAwait(false);
-                        await Task.Delay(300).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
+                    await guildUser.RemoveRoleAsync(sameRole).ConfigureAwait(false);
+                    await Task.Delay(300).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // ignored
                 }
             }
         }
@@ -128,8 +124,7 @@ public class SelfAssignedRolesService : INService
         {
             gc.SelfAssignableRoleGroupNames.Add(new GroupName
             {
-                Name = name,
-                Number = group
+                Name = name, Number = group
             });
             set = true;
         }

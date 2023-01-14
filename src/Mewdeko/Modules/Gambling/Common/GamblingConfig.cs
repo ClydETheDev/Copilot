@@ -16,9 +16,11 @@ public sealed class GamblingConfig
         Decay = new DecayConfig();
     }
 
-    [Comment(@"DO NOT CHANGE")] public int Version { get; set; } = 1;
+    [Comment(@"DO NOT CHANGE")]
+    public int Version { get; set; } = 1;
 
-    [Comment(@"Currency settings")] public CurrencyConfig Currency { get; set; }
+    [Comment(@"Currency settings")]
+    public CurrencyConfig Currency { get; set; }
 
     [Comment(@"Minimum amount users can bet (>=0)")]
     public int MinBet { get; set; } = 0;
@@ -36,7 +38,7 @@ Set 0 for unlimited")]
     [Comment(@"Automatic currency generation settings.")]
     public GenerationConfig Generation { get; set; }
 
-    [Comment(@"Settings for timely command 
+    [Comment(@"Settings for timely command
 (letting people claim X amount of currency every Y hours)")]
     public TimelyConfig Timely { get; set; }
 
@@ -66,7 +68,7 @@ Set 0 for unlimited")]
     {
         [Comment(@"How much currency will the users get every time they run .timely command
 setting to 0 or less will disable this feature")]
-        public int Amount { get; set; } = 0;
+        public int Amount { get; set; }
 
         [Comment(@"How often (in hours) can users claim currency with .timely command
 setting to 0 or less will disable this feature")]
@@ -84,9 +86,7 @@ setting to 0 or less will disable this feature")]
         public BetRollConfig() =>
             Pairs = new[]
             {
-                new(99, 10),
-                new Pair(90, 4),
-                new Pair(66, 2)
+                new(99, 10), new Pair(90, 4), new Pair(66, 2)
             };
 
         [Comment(@"When betroll is played, user will roll a number 0-100.
@@ -137,7 +137,7 @@ default is 0.02, which is 2%")]
 
     public class DecayConfig
     {
-        [Comment(@"Percentage of user's current currency which will be deducted every 24h. 
+        [Comment(@"Percentage of user's current currency which will be deducted every 24h.
 0 - 1 (1 is 100%, 0.5 50%, 0 disabled)")]
         public decimal Percent { get; set; } = 0;
 
@@ -156,14 +156,7 @@ default is 0.02, which is 2%")]
         public WheelOfFortuneSettings() =>
             Multipliers = new[]
             {
-                1.7M,
-                1.5M,
-                0.2M,
-                0.1M,
-                0.3M,
-                0.5M,
-                1.2M,
-                2.4M
+                1.7M, 1.5M, 0.2M, 0.1M, 0.3M, 0.5M, 1.2M, 2.4M
             };
 
         [Comment(@"Self-Explanatory. Has to have 8 values, otherwise the command won't work.")]
@@ -225,18 +218,18 @@ default is 0.02, which is 2%")]
         public class MultipliersData
         {
             [Comment(@"Multiplier for waifureset. Default 150.
-Formula (at the time of writing this): 
+Formula (at the time of writing this):
 price = (waifu_price * 1.25f) + ((number_of_divorces + changes_of_heart + 2) * WaifuReset) rounded up")]
             public int WaifuReset { get; set; } = 150;
 
-            [Comment(@"The minimum amount of currency that you have to pay 
+            [Comment(@"The minimum amount of currency that you have to pay
 in order to buy a waifu who doesn't have a crush on you.
 Default is 1.1
 Example: If a waifu is worth 100, you will have to pay at least 100 * NormalClaim currency to claim her.
 (100 * 1.1 = 110)")]
             public decimal NormalClaim { get; set; } = 1.1m;
 
-            [Comment(@"The minimum amount of currency that you have to pay 
+            [Comment(@"The minimum amount of currency that you have to pay
 in order to buy a waifu that has a crush on you.
 Default is 0.88
 Example: If a waifu is worth 100, you will have to pay at least 100 * CrushClaim currency to claim her.

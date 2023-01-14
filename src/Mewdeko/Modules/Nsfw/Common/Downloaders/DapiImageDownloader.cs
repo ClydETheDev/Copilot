@@ -12,18 +12,13 @@ public abstract class DapiImageDownloader : ImageDownloader<DapiImageObject>
     protected DapiImageDownloader(Booru booru, HttpClient http, string baseUrl) : base(booru, http) => BaseUrl = baseUrl;
 
     public abstract Task<bool> IsTagValid(string tag, CancellationToken cancel = default);
-    protected async Task<bool> AllTagsValid(string[] tags, CancellationToken cancel = default)
+
+    protected async Task<bool> AllTagsValid(IEnumerable<string> tags, CancellationToken cancel = default)
     {
         var results = await Task.WhenAll(tags.Select(tag => IsTagValid(tag, cancel))).ConfigureAwait(false);
 
         // if any of the tags is not valid, the query is not valid
-        foreach (var result in results)
-        {
-            if (!result)
-                return false;
-        }
-
-        return true;
+        return results.All(result => result);
     }
 
     public override async Task<List<DapiImageObject>> DownloadImagesAsync(string[] tags, int page,
@@ -40,11 +35,11 @@ public abstract class DapiImageDownloader : ImageDownloader<DapiImageObject>
 
         var uri = $"{BaseUrl}/posts.json?limit=200&tags={tagString}&page={page}";
         var imageObjects = await Http.GetFromJsonAsync<DapiImageObject[]>(uri, SerializerOptions, cancel)
-                                      .ConfigureAwait(false);
+            .ConfigureAwait(false);
         if (imageObjects is null)
             return new List<DapiImageObject>();
         return imageObjects
-               .Where(x => x.FileUrl is not null)
-               .ToList();
+            .Where(x => x.FileUrl is not null)
+            .ToList();
     }
 }

@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Collections.Immutable;
+using System.IO;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Serilog;
-using System.Collections.Immutable;
-using System.IO;
+
 // ReSharper disable UnusedMember.Local
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 // ReSharper disable UnassignedGetOnlyAutoProperty
@@ -115,13 +116,6 @@ public class BotCredentials : IBotCredentials
             TotalShards = ts < 1 ? 1 : ts;
 
             CarbonKey = data[nameof(CarbonKey)];
-            var dbSection = data.GetSection("db");
-            Db = new DbConfig(string.IsNullOrWhiteSpace(dbSection["Type"])
-                    ? "sqlite"
-                    : dbSection["Type"],
-                string.IsNullOrWhiteSpace(dbSection["ConnectionString"])
-                    ? "Data Source=data/Mewdeko.db"
-                    : dbSection["ConnectionString"]);
 
             TwitchClientId = data[nameof(TwitchClientId)];
             if (string.IsNullOrWhiteSpace(TwitchClientId)) TwitchClientId = "67w6z9i09xv2uoojdm9l0wsyph4hxo6";
@@ -154,7 +148,6 @@ public class BotCredentials : IBotCredentials
     public string OsuApiKey { get; set; }
     public string CleverbotApiKey { get; set; }
     public RestartConfig RestartCommand { get; set; }
-    public DbConfig Db { get; set; }
     public int TotalShards { get; set; }
     public string CarbonKey { get; set; }
     public string ChatSavePath { get; set; }
@@ -193,14 +186,12 @@ public class BotCredentials : IBotCredentials
     {
         public ulong[] OwnerIds { get; set; } =
         {
-            280835732728184843,
-            786375627892064257
+            280835732728184843, 786375627892064257
         };
 
         public ulong[] OfficialMods { get; set; } =
         {
-            280835732728184843,
-            786375627892064257
+            280835732728184843, 786375627892064257
         };
 
         public string SoundCloudClientId { get; set; } = "";
@@ -219,7 +210,6 @@ public class BotCredentials : IBotCredentials
         public string CleverbotApiKey { get; } = "";
 
         public string CarbonKey { get; } = "";
-        public DbConfig Db { get; } = new("sqlite", "Data Source=data/Mewdeko.db");
         public int TotalShards { get; } = 1;
         public string PatreonAccessToken { get; } = "";
         public string PatreonCampaignId { get; } = "334038";
@@ -243,11 +233,14 @@ public class BotCredentials : IBotCredentials
         public ulong PronounAbuseReportChannelId { get; set; } = 970086914826858547;
         public string ChatSavePath { get; set; } = "/usr/share/nginx/cdn/chatlogs/";
 
-        [JsonIgnore] ImmutableArray<ulong> IBotCredentials.OwnerIds { get; }
+        [JsonIgnore]
+        ImmutableArray<ulong> IBotCredentials.OwnerIds { get; }
 
-        [JsonIgnore] ImmutableArray<ulong> IBotCredentials.OfficialMods { get; }
+        [JsonIgnore]
+        ImmutableArray<ulong> IBotCredentials.OfficialMods { get; }
 
-        [JsonIgnore] RestartConfig IBotCredentials.RestartCommand { get; }
+        [JsonIgnore]
+        RestartConfig IBotCredentials.RestartCommand { get; }
 
         public bool IsOwner(IUser u) => throw new NotImplementedException();
 

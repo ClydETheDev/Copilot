@@ -1,13 +1,11 @@
-﻿
-
-#nullable enable
-using Mewdeko.Modules.Searches.Common.StreamNotifications.Models;
-using Newtonsoft.Json;
-using Serilog;
+﻿#nullable enable
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Mewdeko.Modules.Searches.Common.StreamNotifications.Models;
+using Newtonsoft.Json;
+using Serilog;
 
 namespace Mewdeko.Modules.Searches.Common.StreamNotifications.Providers;
 
@@ -27,23 +25,17 @@ public class PicartoProvider : Provider
     public override Task<bool> IsValidUrl(string url)
     {
         var match = Regex.Match(url);
-        if (!match.Success)
-            return Task.FromResult(false);
+        return Task.FromResult(match.Success);
 
         // var username = match.Groups["name"].Value;
-        return Task.FromResult(true);
     }
 
     public override Task<StreamData?> GetStreamDataByUrlAsync(string url)
     {
         var match = Regex.Match(url);
-        if (match.Success)
-        {
-            var name = match.Groups["name"].Value;
-            return GetStreamDataAsync(name);
-        }
-
-        return Task.FromResult<StreamData?>(null);
+        if (!match.Success) return Task.FromResult<StreamData?>(null);
+        var name = match.Groups["name"].Value;
+        return GetStreamDataAsync(name);
     }
 
 #pragma warning disable CS8609
@@ -88,7 +80,7 @@ public class PicartoProvider : Provider
                     Platform,
                     login,
                     ex.Message);
-                    FailingStreams.TryAdd(login, DateTime.UtcNow);
+                FailingStreams.TryAdd(login, DateTime.UtcNow);
             }
         }
 

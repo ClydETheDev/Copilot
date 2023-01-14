@@ -1,10 +1,11 @@
-﻿using Discord.Net;
+﻿using System.Data.Entity;
+using System.Net;
+using System.Threading.Tasks;
+using Discord.Net;
 using Mewdeko.Common.TypeReaders;
 using Mewdeko.Modules.Utility.Common;
 using Mewdeko.Modules.Utility.Common.Exceptions;
 using Serilog;
-using System.Net;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Utility.Services;
 
@@ -19,10 +20,10 @@ public class StreamRoleService : INService, IUnloadableService
         this.db = db;
         this.eventHandler = eventHandler;
         using var uow = db.GetDbContext();
-        var gc = uow.GuildConfigs.All().Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
+        var gc = uow.GuildConfigs.Include(x => x.StreamRole).Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
         guildSettings = gc
             .ToDictionary(x => x.GuildId, x => x.StreamRole)
-            .Where(x => x.Value != null && x.Value.Enabled)
+            .Where(x => x.Value is { Enabled: true })
             .ToConcurrent();
 
         eventHandler.GuildMemberUpdated += Client_GuildMemberUpdated;
@@ -73,8 +74,7 @@ public class StreamRoleService : INService, IUnloadableService
             {
                 var userObj = new StreamRoleWhitelistedUser
                 {
-                    UserId = userId,
-                    Username = userName
+                    UserId = userId, Username = userName
                 };
 
                 if (action == AddRemove.Rem)
@@ -95,8 +95,7 @@ public class StreamRoleService : INService, IUnloadableService
             {
                 var userObj = new StreamRoleBlacklistedUser
                 {
-                    UserId = userId,
-                    Username = userName
+                    UserId = userId, Username = userName
                 };
 
                 if (action == AddRemove.Rem)
@@ -199,6 +198,7 @@ public class StreamRoleService : INService, IUnloadableService
                 await RescanUser(x, setting, addRole).ConfigureAwait(false);
         }
     }
+
     public async Task StopStreamRole(IGuild guild, bool cleanup = false)
     {
         var uow = db.GetDbContext();

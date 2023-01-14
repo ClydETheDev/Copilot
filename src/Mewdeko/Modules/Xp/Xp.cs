@@ -1,11 +1,12 @@
-﻿using Discord.Commands;
+﻿using System.Threading.Tasks;
+using Discord.Commands;
 using Fergun.Interactive;
 using Fergun.Interactive.Pagination;
 using Mewdeko.Common.Attributes.TextCommands;
 using Mewdeko.Modules.Gambling.Services;
 using Mewdeko.Modules.Xp.Common;
 using Mewdeko.Modules.Xp.Services;
-using System.Threading.Tasks;
+using Mewdeko.Services.Settings;
 
 namespace Mewdeko.Modules.Xp;
 
@@ -32,18 +33,21 @@ public partial class Xp : MewdekoModuleBase<XpService>
     {
         Server
     }
+
     private readonly DownloadTracker tracker;
     private readonly XpConfigService xpConfig;
     private readonly InteractiveService interactivity;
     private readonly GamblingConfigService gss;
+    private readonly BotConfigService bss;
 
     public Xp(DownloadTracker tracker, XpConfigService xpconfig, InteractiveService serv,
-        GamblingConfigService gss)
+        GamblingConfigService gss, BotConfigService bss)
     {
         xpConfig = xpconfig;
         this.tracker = tracker;
         interactivity = serv;
         this.gss = gss;
+        this.bss = bss;
     }
 
     private async Task SendXpSettings(ITextChannel chan)
@@ -53,8 +57,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
         {
             var toadd = new XpStuffs
             {
-                Setting = "xptextrate",
-                Value = $"{xpConfig.Data.XpPerMessage} (Global Default)"
+                Setting = "xptextrate", Value = $"{xpConfig.Data.XpPerMessage} (Global Default)"
             };
             list.Add(toadd);
         }
@@ -62,8 +65,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
         {
             var toadd = new XpStuffs
             {
-                Setting = "xptextrate",
-                Value = $"{Service.GetTxtXpRate(ctx.Guild.Id)} (Server Set)"
+                Setting = "xptextrate", Value = $"{Service.GetTxtXpRate(ctx.Guild.Id)} (Server Set)"
             };
             list.Add(toadd);
         }
@@ -72,8 +74,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
         {
             var toadd = new XpStuffs
             {
-                Setting = "voicexprate",
-                Value = $"{xpConfig.Data.VoiceXpPerMinute} (Global Default)"
+                Setting = "voicexprate", Value = $"{xpConfig.Data.VoiceXpPerMinute} (Global Default)"
             };
             list.Add(toadd);
         }
@@ -81,8 +82,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
         {
             var toadd = new XpStuffs
             {
-                Setting = "xpvoicerate",
-                Value = $"{Service.GetVoiceXpRate(ctx.Guild.Id)} (Server Set)"
+                Setting = "xpvoicerate", Value = $"{Service.GetVoiceXpRate(ctx.Guild.Id)} (Server Set)"
             };
             list.Add(toadd);
         }
@@ -91,8 +91,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
         {
             var toadd = new XpStuffs
             {
-                Setting = "txtxptimeout",
-                Value = $"{xpConfig.Data.MessageXpCooldown} (Global Default)"
+                Setting = "txtxptimeout", Value = $"{xpConfig.Data.MessageXpCooldown} (Global Default)"
             };
             list.Add(toadd);
         }
@@ -100,8 +99,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
         {
             var toadd = new XpStuffs
             {
-                Setting = "txtxptimeout",
-                Value = $"{Service.GetXpTimeout(ctx.Guild.Id)} (Server Set)"
+                Setting = "txtxptimeout", Value = $"{Service.GetXpTimeout(ctx.Guild.Id)} (Server Set)"
             };
             list.Add(toadd);
         }
@@ -110,8 +108,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
         {
             var toadd = new XpStuffs
             {
-                Setting = "voiceminutestimeout",
-                Value = $"{xpConfig.Data.VoiceMaxMinutes} (Global Default)"
+                Setting = "voiceminutestimeout", Value = $"{xpConfig.Data.VoiceMaxMinutes} (Global Default)"
             };
             list.Add(toadd);
         }
@@ -119,16 +116,78 @@ public partial class Xp : MewdekoModuleBase<XpService>
         {
             var toadd = new XpStuffs
             {
-                Setting = "voiceminutestimeout",
-                Value = $"{Service.GetXpTimeout(ctx.Guild.Id)} (Server Set)"
+                Setting = "voiceminutestimeout", Value = $"{Service.GetXpTimeout(ctx.Guild.Id)} (Server Set)"
             };
             list.Add(toadd);
         }
 
-        var strings = new List<string>();
-        foreach (var i in list) strings.Add($"{i.Setting,-25} = {i.Value}\n");
+        var strings = list.Select(i => $"{i.Setting,-25} = {i.Value}\n").ToList();
 
         await chan.SendConfirmAsync(Format.Code(string.Concat(strings), "hs")).ConfigureAwait(false);
+    }
+
+    [Cmd, Aliases, RequireContext(ContextType.Guild), Ratelimit(60)]
+    public async Task SyncRewards()
+    {
+        var user = ctx.User as IGuildUser;
+        var userStats = await Service.GetUserStatsAsync(user);
+        var perks = await Service.GetRoleRewards(ctx.Guild.Id);
+        if (!perks.Any(x => x.Level <= userStats.Guild.Level))
+        {
+            await ctx.Channel.SendErrorAsync($"{bss.Data.ErrorEmote} There are no rewards configured in this guild, or you do not meet the requirements for them!");
+            return;
+        }
+
+        perks = perks.Where(x => x.Level <= userStats.Guild.Level);
+        var msg = await ctx.Channel.SendConfirmAsync($"{bss.Data.LoadingEmote} Attempting to sync {perks.Count()} xp perks...");
+        var successCouunt = 0;
+        var failedCount = 0;
+        var existingCount = 0;
+        foreach (var i in perks.Where(x => x.Level <= userStats.Guild.Level))
+        {
+            if (user.RoleIds.Contains(i.RoleId))
+            {
+                existingCount++;
+                continue;
+            }
+
+            try
+            {
+                await user.AddRoleAsync(i.RoleId);
+                successCouunt++;
+            }
+            catch
+            {
+                failedCount++;
+            }
+        }
+
+        if (existingCount == perks.Count())
+            await msg.ModifyAsync(x =>
+            {
+                x.Embed = new EmbedBuilder()
+                    .WithErrorColor()
+                    .WithDescription(
+                        $"{bss.Data.ErrorEmote} Failed to sync {perks.Count()} because they are all already applied.")
+                    .Build();
+            });
+        if (failedCount > 0)
+            await msg.ModifyAsync(x =>
+            {
+                x.Embed = new EmbedBuilder()
+                    .WithErrorColor()
+                    .WithDescription(
+                        $"{bss.Data.ErrorEmote} Synced {successCouunt} role perks and failed to sync {failedCount} role perks. Please make sure the bot is above the roles to sync.")
+                    .Build();
+            });
+        else
+            await msg.ModifyAsync(x =>
+            {
+                x.Embed = new EmbedBuilder()
+                    .WithOkColor()
+                    .WithDescription($"{bss.Data.SuccessEmote} Succesfully synced {successCouunt} role perks and skipped {existingCount} already applied role perks!!")
+                    .Build();
+            });
     }
 
     [Cmd, Aliases, RequireContext(ContextType.Guild),
@@ -306,7 +365,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
         else
         {
             await ReplyConfirmLocalizedAsync("role_reward_added", level, Format.Bold(role.ToString()))
-                        .ConfigureAwait(false);
+                .ConfigureAwait(false);
         }
     }
 
@@ -509,6 +568,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
         await ReplyConfirmLocalizedAsync("modified", Format.Bold(usr), Format.Bold(amount.ToString()))
             .ConfigureAwait(false);
     }
+
     [Cmd, Aliases, RequireContext(ContextType.Guild), OwnerOnly]
     public async Task XpCurrencyReward(int level, int amount = 0)
     {
@@ -530,6 +590,7 @@ public partial class Xp : MewdekoModuleBase<XpService>
                 .ConfigureAwait(false);
         }
     }
+
     [Cmd, Aliases, RequireContext(ContextType.Guild),
      UserPerm(GuildPermission.Administrator)]
     public Task XpAdd(int amount, [Remainder] IGuildUser user) => XpAdd(amount, user.Id);

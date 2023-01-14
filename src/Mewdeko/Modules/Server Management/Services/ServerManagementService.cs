@@ -7,7 +7,7 @@ public class ServerManagementService : INService
     public ServerManagementService(DiscordSocketClient client, DbService db)
     {
         using var uow = db.GetDbContext();
-        var configs = uow.GuildConfigs.All().Where(x => client.Guilds.Select(x => x.Id).Contains(x.GuildId));
+        var configs = uow.GuildConfigs.Where(x => client.Guilds.Select(socketGuild => socketGuild.Id).Contains(x.GuildId));
 
         GuildMuteRoles = configs
             .Where(c => !string.IsNullOrWhiteSpace(c.MuteRoleName))
@@ -38,7 +38,7 @@ public class ServerManagementService : INService
                 //if creations fails,  maybe the name != correct, find default one, if doesn't work, create default one
                 muteRole = guild.Roles.FirstOrDefault(r => r.Name == muteRoleName) ??
                            await guild.CreateRoleAsync(defaultMuteRoleName, isMentionable: false)
-                                      .ConfigureAwait(false);
+                               .ConfigureAwait(false);
             }
         }
 

@@ -1,7 +1,7 @@
+using System.Threading.Tasks;
 using Mewdeko.Database.Common;
 using Mewdeko.Modules.Games.Common;
 using Serilog;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Games.Services;
 
@@ -47,7 +47,10 @@ public class PollService : INService
             return null;
 
         var col = new IndexedCollection<PollAnswer>(data.Skip(1)
-                                                        .Select(x => new PollAnswer { Text = x }));
+            .Select(x => new PollAnswer
+            {
+                Text = x
+            }));
 
         return new Poll
         {
@@ -70,7 +73,7 @@ public class PollService : INService
         return true;
     }
 
-    public async Task<Poll>? StopPoll(ulong guildId)
+    public async Task<Poll?> StopPoll(ulong guildId)
     {
         if (!ActivePolls.TryRemove(guildId, out var pr)) return null;
         await using (var uow = db.GetDbContext())

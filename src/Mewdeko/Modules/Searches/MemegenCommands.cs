@@ -1,12 +1,12 @@
+using System.Collections.Immutable;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using Discord.Commands;
 using Fergun.Interactive;
 using Fergun.Interactive.Pagination;
 using Mewdeko.Common.Attributes.TextCommands;
 using Newtonsoft.Json;
-using System.Collections.Immutable;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Searches;
 
@@ -17,14 +17,30 @@ public partial class Searches
     {
         private static readonly ImmutableDictionary<char, string> Map = new Dictionary<char, string>
         {
-            {'?', "~q"},
-            {'%', "~p"},
-            {'#', "~h"},
-            {'/', "~s"},
-            {' ', "-"},
-            {'-', "--"},
-            {'_', "__"},
-            {'"', "''"}
+            {
+                '?', "~q"
+            },
+            {
+                '%', "~p"
+            },
+            {
+                '#', "~h"
+            },
+            {
+                '/', "~s"
+            },
+            {
+                ' ', "-"
+            },
+            {
+                '-', "--"
+            },
+            {
+                '_', "__"
+            },
+            {
+                '"', "''"
+            }
         }.ToImmutableDictionary();
 
         private readonly IHttpClientFactory httpFactory;
@@ -53,7 +69,7 @@ public partial class Searches
                 .WithFooter(PaginatorFooter.PageNumber | PaginatorFooter.Users)
                 .WithMaxPageIndex(data.Count / 15)
                 .WithDefaultEmotes()
-            .WithActionOnCancellation(ActionOnStop.DeleteMessage)
+                .WithActionOnCancellation(ActionOnStop.DeleteMessage)
                 .Build();
 
             await interactivity.SendPaginatorAsync(paginator, Context.Channel, TimeSpan.FromMinutes(60)).ConfigureAwait(false);
@@ -63,22 +79,18 @@ public partial class Searches
                 await Task.CompletedTask.ConfigureAwait(false);
                 var templates = data.Skip(page * 15).Take(15).Aggregate("", (current, template) => current + $"**{template.Name}:**\n key: `{template.Id}`\n");
                 return new PageBuilder()
-                            .WithOkColor()
-                            .WithDescription(templates);
+                    .WithOkColor()
+                    .WithDescription(templates);
             }
         }
 
         [Cmd, Aliases]
         public async Task Memegen(string meme, [Remainder] string? memeText = null)
         {
-            var memeUrl = $"http://api.memegen.link/{meme}";
+            var memeUrl = $"https://api.memegen.link/{meme}";
             if (!string.IsNullOrWhiteSpace(memeText))
             {
-                foreach (var text in memeText.Split(';'))
-                {
-                    var newText = Replace(text);
-                    memeUrl += $"/{newText}";
-                }
+                memeUrl = memeText.Split(';').Select(Replace).Aggregate(memeUrl, (current, newText) => current + $"/{newText}");
             }
 
             memeUrl += ".png";

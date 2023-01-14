@@ -1,8 +1,12 @@
+using System.Diagnostics;
+using System.Globalization;
+using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.Net;
 using Discord.Rest;
 using Fergun.Interactive;
 using Fergun.Interactive.Pagination;
+using LinqToDB.EntityFrameworkCore;
 using Mewdeko.Common.Attributes.TextCommands;
 using Mewdeko.Common.DiscordImplementations;
 using Mewdeko.Modules.OwnerOnly.Services;
@@ -13,11 +17,9 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using System.Diagnostics;
-using System.Globalization;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.OwnerOnly;
+
 [OwnerOnly]
 public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
 {
@@ -75,13 +77,12 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
     {
         var msg = new MewdekoUserMessage
         {
-            Content = $"{await guildSettings.GetPrefix(ctx.Guild)}{args}",
-            Author = user,
-            Channel = ctx.Channel
+            Content = $"{await guildSettings.GetPrefix(ctx.Guild)}{args}", Author = user, Channel = ctx.Channel
         };
         commandHandler.AddCommandToParseQueue(msg);
         _ = Task.Run(async () => await commandHandler.ExecuteCommandsInChannelAsync(ctx.Channel.Id)).ConfigureAwait(false);
     }
+
     [Cmd, Aliases]
     public async Task RedisExec([Remainder] string command)
     {
@@ -89,6 +90,7 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
         var eb = new EmbedBuilder().WithOkColor().WithTitle(result.Type.ToString()).WithDescription(result.ToString());
         await ctx.Channel.SendMessageAsync(embed: eb.Build()).ConfigureAwait(false);
     }
+
     [Cmd, Aliases]
     public async Task SqlExec([Remainder] string sql)
     {
@@ -98,18 +100,19 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
         var affected = await uow.Database.ExecuteSqlRawAsync(sql).ConfigureAwait(false);
         await ctx.Channel.SendErrorAsync($"Affected {affected} rows.").ConfigureAwait(false);
     }
+
     [Cmd, Aliases]
     public async Task ListServers()
     {
         var guilds = client.Guilds;
         var paginator = new LazyPaginatorBuilder()
-                        .AddUser(ctx.User)
-                        .WithPageFactory(PageFactory)
-                        .WithFooter(PaginatorFooter.PageNumber | PaginatorFooter.Users)
-                        .WithMaxPageIndex(guilds.Count / 10)
-                        .WithDefaultEmotes()
-                        .WithActionOnCancellation(ActionOnStop.DeleteMessage)
-                        .Build();
+            .AddUser(ctx.User)
+            .WithPageFactory(PageFactory)
+            .WithFooter(PaginatorFooter.PageNumber | PaginatorFooter.Users)
+            .WithMaxPageIndex(guilds.Count / 10)
+            .WithDefaultEmotes()
+            .WithActionOnCancellation(ActionOnStop.DeleteMessage)
+            .Build();
 
         await interactivity.SendPaginatorAsync(paginator, Context.Channel, TimeSpan.FromMinutes(60)).ConfigureAwait(false);
 
@@ -121,14 +124,47 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
             foreach (var i in newGuilds)
             {
                 eb.AddField($"{i.Name} | {i.Id}", $"Members: {i.Users.Count}"
-                                    + $"\nOnline Members: {i.Users.Count(x => x.Status is UserStatus.Online or UserStatus.DoNotDisturb or UserStatus.Idle)}"
-                                    + $"\nOwner: {i.Owner} | {i.OwnerId}"
-                                    + $"\n Created On: {TimestampTag.FromDateTimeOffset(i.CreatedAt)}");
+                                                  + $"\nOnline Members: {i.Users.Count(x => x.Status is UserStatus.Online or UserStatus.DoNotDisturb or UserStatus.Idle)}"
+                                                  + $"\nOwner: {i.Owner} | {i.OwnerId}"
+                                                  + $"\n Created On: {TimestampTag.FromDateTimeOffset(i.CreatedAt)}");
             }
 
             return eb;
         }
+    }
 
+    [Cmd, Aliases]
+    public async Task CommandStats()
+    {
+        await using var uow = db.GetDbContext();
+        var commandStatsTable = uow.CommandStats;
+        // fetch actual tops
+        var topCommand = await commandStatsTable.Where(x => !x.Trigger).GroupBy(q => q.NameOrId)
+            .OrderByDescending(gp => gp.Count()).Select(x => x.Key).FirstOrDefaultAsyncLinqToDB();
+        var topModule = await commandStatsTable.Where(x => !x.Trigger).GroupBy(q => q.Module)
+            .OrderByDescending(gp => gp.Count()).Select(x => x.Key).FirstOrDefaultAsyncLinqToDB();
+        var topGuild = await commandStatsTable.Where(x => !x.Trigger).GroupBy(q => q.GuildId)
+            .OrderByDescending(gp => gp.Count()).Select(x => x.Key).FirstOrDefaultAsyncLinqToDB();
+        var topUser = await commandStatsTable.Where(x => !x.Trigger).GroupBy(q => q.UserId)
+            .OrderByDescending(gp => gp.Count()).Select(x => x.Key).FirstOrDefaultAsyncLinqToDB();
+
+        // then fetch their counts... This can probably be done better....
+        var topCommandCount = commandStatsTable.Count(x => x.NameOrId == topCommand);
+        var topModuleCount = commandStatsTable.Count(x => x.NameOrId == topCommand);
+        var topGuildCount = commandStatsTable.Count(x => x.GuildId == topGuild);
+        var topUserCount = commandStatsTable.Count(x => x.UserId == topUser);
+
+        var guild = await client.Rest.GetGuildAsync(topGuild);
+        var user = await client.Rest.GetUserAsync(topUser);
+
+        var eb = new EmbedBuilder()
+            .WithOkColor()
+            .AddField("Top Command", $"{topCommand} was used {topCommandCount} times!")
+            .AddField("Top Module", $"{topModule} was used {topModuleCount} times!")
+            .AddField("Top User", $"{user} has used commands {topUserCount} times!")
+            .AddField("Top Guild", $"{guild} has used commands {topGuildCount} times!");
+
+        await ctx.Channel.SendMessageAsync(embed: eb.Build());
     }
 
     [Cmd, Aliases]
@@ -341,7 +377,8 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
      UserPerm(GuildPermission.Administrator), OwnerOnly]
     public async Task StartupCommandAdd([Remainder] string cmdText)
     {
-        if (cmdText.StartsWith($"{await guildSettings.GetPrefix(ctx.Guild)}die", StringComparison.InvariantCulture) || cmdText.StartsWith($"{await guildSettings.GetPrefix(ctx.Guild)}restart", StringComparison.InvariantCulture))
+        if (cmdText.StartsWith($"{await guildSettings.GetPrefix(ctx.Guild)}die", StringComparison.InvariantCulture) ||
+            cmdText.StartsWith($"{await guildSettings.GetPrefix(ctx.Guild)}restart", StringComparison.InvariantCulture))
             return;
 
         var guser = (IGuildUser)ctx.User;
@@ -382,6 +419,7 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
             if (!(await i.CheckPreconditionsAsync(ctx, services).ConfigureAwait(false)).IsSuccess)
                 return;
         }
+
         var count = Service.GetAutoCommands().Where(x => x.GuildId == ctx.Guild.Id);
 
         if (count.Count() == 15)
@@ -733,9 +771,10 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
                 await ctx.Channel.SendErrorAsync("Unable to find that user or guild! Please double check the Id!").ConfigureAwait(false);
                 return;
             }
+
             if (SmartEmbed.TryParse(rep.Replace(msg), ctx.Guild?.Id, out var embed, out var plainText, out var components))
             {
-                await potentialUser.SendMessageAsync(plainText, embeds: embed, components:components.Build()).ConfigureAwait(false);
+                await potentialUser.SendMessageAsync(plainText, embeds: embed, components: components.Build()).ConfigureAwait(false);
                 await ctx.Channel.SendConfirmAsync($"Message sent to {potentialUser.Mention}!").ConfigureAwait(false);
                 return;
             }
@@ -750,12 +789,13 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
             await ctx.Channel.SendErrorAsync("You need to specify a Channel or User ID after the Server ID!").ConfigureAwait(false);
             return;
         }
+
         var channel = await potentialServer.GetTextChannelAsync(to).ConfigureAwait(false);
         if (channel is not null)
         {
             if (SmartEmbed.TryParse(rep.Replace(msg), ctx.Guild.Id, out var embed, out var plainText, out var components))
             {
-                await channel.SendMessageAsync(plainText, embeds: embed, components:components?.Build()).ConfigureAwait(false);
+                await channel.SendMessageAsync(plainText, embeds: embed, components: components?.Build()).ConfigureAwait(false);
                 await ctx.Channel.SendConfirmAsync($"Message sent to {potentialServer} in {channel.Mention}").ConfigureAwait(false);
                 return;
             }
@@ -771,9 +811,10 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
             await ctx.Channel.SendErrorAsync("Unable to find that channel or user! Please check the ID and try again.").ConfigureAwait(false);
             return;
         }
-        if (SmartEmbed.TryParse(rep.Replace(msg), ctx.Guild?.Id, out var embed1, out var plainText1, out var components1 ))
+
+        if (SmartEmbed.TryParse(rep.Replace(msg), ctx.Guild?.Id, out var embed1, out var plainText1, out var components1))
         {
-            await channel.SendMessageAsync(plainText1, embeds: embed1, components:components1?.Build()).ConfigureAwait(false);
+            await channel.SendMessageAsync(plainText1, embeds: embed1, components: components1?.Build()).ConfigureAwait(false);
             await ctx.Channel.SendConfirmAsync($"Message sent to {potentialServer} to {user.Mention}").ConfigureAwait(false);
             return;
         }
@@ -865,8 +906,7 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
 
         var embed = new EmbedBuilder
         {
-            Title = "Evaluating...",
-            Color = new Color(0xD091B2)
+            Title = "Evaluating...", Color = new Color(0xD091B2)
         };
         var msg = await ctx.Channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
 
@@ -939,8 +979,7 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
         // execution succeeded
         embed = new EmbedBuilder
         {
-            Title = "Evaluation successful",
-            Color = new Color(0xD091B2)
+            Title = "Evaluation successful", Color = new Color(0xD091B2)
         };
 
         embed.AddField("Result", css.ReturnValue != null ? css.ReturnValue.ToString() : "No value returned")
@@ -953,7 +992,6 @@ public class OwnerOnly : MewdekoModuleBase<OwnerOnlyService>
         await msg.ModifyAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
     }
 }
-
 
 public sealed class EvaluationEnvironment
 {

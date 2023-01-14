@@ -1,6 +1,6 @@
-﻿using Serilog;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace Mewdeko.Modules.Gambling.Common.Blackjack;
 
@@ -205,10 +205,7 @@ public class Blackjack
         {
             foreach (var usr in Players)
             {
-                if (usr.State is User.UserState.Stand or User.UserState.Blackjack)
-                    usr.State = User.UserState.Won;
-                else
-                    usr.State = User.UserState.Lost;
+                usr.State = usr.State is User.UserState.Stand or User.UserState.Blackjack ? User.UserState.Won : User.UserState.Lost;
             }
         }
         else
@@ -222,8 +219,8 @@ public class Blackjack
                 else if (usr.State == User.UserState.Stand)
                 {
                     usr.State = hw < usr.GetHandValue()
-                                        ? User.UserState.Won
-                                        : User.UserState.Lost;
+                        ? User.UserState.Won
+                        : User.UserState.Lost;
                 }
                 else
                 {

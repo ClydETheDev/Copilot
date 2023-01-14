@@ -1,8 +1,8 @@
-﻿using Discord.Commands;
+﻿using System.Threading.Tasks;
+using Discord.Commands;
 using Discord.Interactions;
 using Mewdeko.Common.ModuleBehaviors;
 using Mewdeko.Services.Settings;
-using System.Threading.Tasks;
 
 namespace Mewdeko.Modules.Permissions.Services;
 
@@ -22,28 +22,19 @@ public class GlobalPermissionService : ILateBlocker, INService
         var settings = bss.Data;
         var commandName = command.Name.ToLowerInvariant();
 
-        if (commandName != "resetglobalperms" &&
-            (settings.Blocked.Commands.Contains(commandName) ||
-             settings.Blocked.Modules.Contains(moduleName.ToLowerInvariant())))
-        {
-            return Task.FromResult(true);
-        }
-
-        return Task.FromResult(false);
+        return Task.FromResult(commandName != "resetglobalperms" &&
+                               (settings.Blocked.Commands.Contains(commandName) ||
+                                settings.Blocked.Modules.Contains(moduleName.ToLowerInvariant())));
     }
+
     public Task<bool> TryBlockLate(DiscordSocketClient client, IInteractionContext ctx,
         ICommandInfo command)
     {
         var settings = bss.Data;
         var commandName = command.MethodName.ToLowerInvariant();
 
-        if (commandName != "resetglobalperms" &&
-            settings.Blocked.Commands.Contains(commandName))
-        {
-            return Task.FromResult(true);
-        }
-
-        return Task.FromResult(false);
+        return Task.FromResult(commandName != "resetglobalperms" &&
+                               settings.Blocked.Commands.Contains(commandName));
     }
 
     /// <summary>

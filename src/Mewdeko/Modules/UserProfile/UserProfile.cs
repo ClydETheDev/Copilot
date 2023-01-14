@@ -1,9 +1,9 @@
-﻿using Discord.Commands;
+﻿using System.Threading.Tasks;
+using Discord.Commands;
 using Mewdeko.Common.Attributes.TextCommands;
 using Mewdeko.Modules.UserProfile.Services;
-using SixLabors.ImageSharp.PixelFormats;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp.PixelFormats;
 using Color = SixLabors.ImageSharp.Color;
 
 namespace Mewdeko.Modules.UserProfile;
@@ -65,6 +65,28 @@ public class UserProfile : MewdekoModuleBase<UserProfileService>
     }
 
     [Cmd, Aliases]
+    public async Task UserStatsOptOut()
+    {
+        var optout = await Service.ToggleOptOut(ctx.User);
+        if (!optout)
+            await ctx.Channel.SendConfirmAsync("Succesfully enabled command stats collection! (This does ***not*** collect message contents!)");
+        else
+            await ctx.Channel.SendConfirmAsync("Succesfully disable command stats collection.");
+    }
+
+    [Cmd, Aliases, Ratelimit(3600)]
+    public async Task DeleteUserStatsData()
+    {
+        if (await PromptUserConfirmAsync("Are you sure you want to delete your command stats? This action is irreversible!", ctx.User.Id))
+        {
+            if (await Service.DeleteStatsData(ctx.User))
+                await ctx.Channel.SendErrorAsync("Command Stats deleted.");
+            else
+                await ctx.Channel.SendErrorAsync("There was no data to delete.");
+        }
+    }
+
+    [Cmd, Aliases]
     public async Task SetBirthdayPrivacy(DiscordUser.BirthdayDisplayModeEnum birthdayDisplayModeEnum)
     {
         await Service.SetBirthdayDisplayMode(ctx.User, birthdayDisplayModeEnum);
@@ -90,6 +112,22 @@ public class UserProfile : MewdekoModuleBase<UserProfileService>
     {
         await Service.SetPrivacy(ctx.User, privacyEnum);
         await ctx.Channel.SendConfirmAsync($"Privacy succesfully set to `{privacyEnum.ToString()}`");
+    }
+
+    [Cmd, Aliases]
+    public async Task SetSwitchFc(string switchFc = "")
+    {
+        if (!await Service.SetSwitchFc(ctx.User, switchFc))
+        {
+            await ctx.Channel.SendErrorAsync("The Switch Friend Code you provided is invalid. Please make sure it matches the format sw-XXXX-XXXX-XXXX.");
+            return;
+        }
+
+
+        if (switchFc.Length == 0)
+            await ctx.Channel.SendConfirmAsync("Your Switch Friend Code has been removed.");
+        else
+            await ctx.Channel.SendConfirmAsync($"Your Switch Friend Code has been set to {switchFc}.");
     }
 
     [Cmd, Aliases]
