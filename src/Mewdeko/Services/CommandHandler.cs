@@ -325,7 +325,7 @@ public class CommandHandler : INService
     {
         var blacklistService = services.GetService<BlacklistService>();
         var cb = new ComponentBuilder().WithButton("Support Server", null, ButtonStyle.Link,
-            url: "https://discord.gg/mewdeko").Build();
+            url: "https://discord.gg/85FDf272JE").Build();
         foreach (var bl in blacklistService.BlacklistEntries)
         {
             if ((interaction.Channel as IGuildChannel)?.Guild != null && bl.Type == BlacklistType.Server && bl.ItemId == (interaction.Channel as IGuildChannel)?.Guild?.Id)

@@ -218,5 +218,5 @@ waifu:
       price: 50000
       name: Moon
 # Amount of currency selfhosters will get PER pledged dollar CENT.
-# 1 = 100 currency per $. Used almost exclusively on public Mewdeko.
+# 1 = 100 currency per $. Used almost exclusively on public Copilot.
 patreonCurrencyPerCent: 1

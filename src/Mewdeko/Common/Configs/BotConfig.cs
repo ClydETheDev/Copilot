@@ -19,14 +19,14 @@ public sealed class BotConfig
         DmHelpText = @"{""description"": ""Type `%prefix%h` for help.""}";
         HelpText = @"change this in bot.yml";
         Blocked = new BlockedConfig();
-        Prefix = ".";
+        Prefix = ">";
         RotateStatuses = false;
         GroupGreets = false;
-        ShowInviteButton = true;
+        ShowInviteButton = false;
         LoadingEmote = "<a:HaneMeow:968564817784877066>";
         ErrorEmote = "<:HaneNo:914307917954576414>";
         SuccessEmote = "<:hane_wow:945005763829575680>";
-        SupportServer = "https://discord.gg/mewdeko";
+        SupportServer = "https://discord.gg/85FDf272JE";
     }
 
     [Comment(@"DO NOT CHANGE")]

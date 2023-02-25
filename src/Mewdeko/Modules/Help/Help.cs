@@ -81,7 +81,7 @@ public class Help : MewdekoModuleBase<HelpService>
     [Cmd, Aliases]
     public async Task Donate() =>
         await ctx.Channel.SendConfirmAsync(
-                "If you would like to support the project, here's how:\nKo-Fi: https://ko-fi.com/mewdeko\nI appreciate any donations as they will help improve Mewdeko for the better!")
+                "If you would like to support the project, here's how: Send the invite link to your friends and help the bot grow!")
             .ConfigureAwait(false);
 
     [Cmd, Aliases]
@@ -160,7 +160,7 @@ public class Help : MewdekoModuleBase<HelpService>
                 .AddField(groups.Select(x => x.ElementAt(page).Key).FirstOrDefault(),
                     $"```css\n{string.Join("\n", transformed)}\n```")
                 .WithDescription(
-                    $"✅: You can use this command.\n❌: You cannot use this command.\n{config.Data.LoadingEmote}: If you need any help don't hesitate to join [The Support Server](https://discord.gg/mewdeko)\nDo `{prefix}h commandname` to see info on that command")
+                    $"✅: You can use this command.\n❌: You cannot use this command.\n{config.Data.LoadingEmote}: If you need any help don't hesitate to join [The Support Server](https://discord.gg/85FDf272JE)\nDo `{prefix}h commandname` to see info on that command")
                 .WithOkColor();
         }
     }
@@ -196,10 +196,10 @@ public class Help : MewdekoModuleBase<HelpService>
     }
 
     [Cmd, Aliases]
-    public async Task Guide() => await ctx.Channel.SendConfirmAsync("You can find the website at https://mewdeko.tech").ConfigureAwait(false);
+    public async Task Guide() => await ctx.Channel.SendConfirmAsync("You can find the Sylveon's code at https://github.com/Sylveon76/Mewdeko").ConfigureAwait(false);
 
     [Cmd, Aliases]
-    public async Task Source() => await ctx.Channel.SendConfirmAsync("https://github.com/Sylveon76/Mewdeko").ConfigureAwait(false);
+    public async Task Source() => await ctx.Channel.SendConfirmAsync("https://github.com/ClydETheDev/Copilot").ConfigureAwait(false);
 }
 
 public class CommandTextEqualityComparer : IEqualityComparer<CommandInfo>

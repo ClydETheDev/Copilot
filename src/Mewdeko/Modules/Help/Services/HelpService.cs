@@ -69,8 +69,7 @@ public class HelpService : ILateExecutor, INService
 
         compBuilder.WithButton("Toggle Descriptions", $"toggle-descriptions:{descriptions},{user.Id}");
         compBuilder.WithButton("Invite Me!", style: ButtonStyle.Link,
-            url: "https://discord.com/oauth2/authorize?client_id=752236274261426212&scope=bot&permissions=66186303&scope=bot%20applications.commands");
-        compBuilder.WithButton("Donate to keep the bot running!", style: ButtonStyle.Link, url: "https://ko-fi.com/mewdeko");
+            url: "https://discord.com/api/oauth2/authorize?client_id=976792077868347412&permissions=8&scope=bot%20applications.commands");
         compBuilder.WithSelectMenu(selMenu);
         return compBuilder;
     }
@@ -82,9 +81,8 @@ public class HelpService : ILateExecutor, INService
         embed.WithOkColor();
         embed.WithDescription(
             $"\nDo `{await guildSettings.GetPrefix(guild?.Id)}help command` to see a description of a command you need more info on!" +
-            $"\nDo `{await guildSettings.GetPrefix(guild?.Id)}cmds category` to see the commands in that module." +
-            "\n\n**Youtube Tutorials**\nhttps://www.youtube.com/channel/UCKJEaaZMJQq6lH33L3b_sTg\n\n**Links**\n" +
-            $"[Documentation](https://mewdeko.tech) | [Support Server](https://discord.gg/mewdeko) | [Invite Me](https://discord.com/oauth2/authorize?client_id={bot.Client.CurrentUser.Id}&scope=bot&permissions=66186303&scope=bot%20applications.commands) | [Top.gg Listing](https://top.gg/bot/752236274261426212) | [Donate!](https://ko-fi.com/mewdeko)");
+            $"\nDo `{await guildSettings.GetPrefix(guild?.Id)}cmds category` to see the commands in that module.\n**Links**\n" +
+            $"[GitHub](https://github.com/ClydETheDev/Copilot) | [Support Server](https://discord.gg/85FDf272JE) | [Invite](https://discord.com/oauth2/authorize?client_id={bot.Client.CurrentUser.Id}&scope=bot&permissions=66186303&scope=bot%20applications.commands) | [Vote]()");
         var modules = cmds.Commands.Select(x => x.Module).Where(x => !x.IsSubmodule && !x.Attributes.Any(attribute => attribute is HelpDisabled)).Distinct();
         var count = 0;
         if (description)
@@ -141,8 +139,8 @@ public class HelpService : ILateExecutor, INService
                     var eb = new EmbedBuilder();
                     eb.WithOkColor();
                     eb.WithDescription(
-                        $"Hi there! To see my command categories do `{await guildSettings.GetPrefix(chan.Guild)}cmds`\nMy current Prefix is `{await guildSettings.GetPrefix(chan.Guild)}`\nIf you need help using the bot feel free to join the [Support Server](https://discord.gg/mewdeko)!\n**Please support me! While this bot is free it's not free to run! https://ko-fi.com/mewdeko**\n\n I hope you have a great day!");
-                    eb.WithThumbnailUrl("https://cdn.discordapp.com/emojis/914307922287276052.gif");
+                        $"Hi there! To see my command categories do `{await guildSettings.GetPrefix(chan.Guild)}cmds`\nMy current Prefix is `{await guildSettings.GetPrefix(chan.Guild)}`\nIf you need help using the bot feel free to join the [Support Server](https://discord.gg/85FDf272JE)!");
+                    eb.WithThumbnailUrl("https://media.discordapp.net/attachments/1016340658237227068/1078961966846070874/Ciynxwe.jpg");
                     eb.WithFooter(new EmbedFooterBuilder().WithText(client.CurrentUser.Username).WithIconUrl(client.CurrentUser.RealAvatarUrl().ToString()));
                     await chan.SendMessageAsync(embed: eb.Build()).ConfigureAwait(false);
                 }
@@ -163,14 +161,13 @@ public class HelpService : ILateExecutor, INService
             var eb = new EmbedBuilder
             {
                 Description =
-                    $"Hi, thanks for inviting Mewdeko! I hope you like the bot, and discover all its features! The default prefix is `{px}.` This can be changed with the prefix command."
+                    $"Hi, thanks for inviting Copilot! I hope you like the bot, and discover all its features! The default prefix is `{px}`. This can be changed with the prefix command."
             };
             eb.AddField("How to look for commands",
                 $"1) Use the {px}cmds command to see all the categories\n2) use {px}cmds with the category name to glance at what commands it has. ex: `{px}cmds mod`\n3) Use {px}h with a command name to view its help. ex: `{px}h purge`");
-            eb.AddField("Have any questions, or need my invite link?", "Support Server: https://discord.gg/mewdeko \nInvite Link: https://mewdeko.tech/invite");
-            eb.AddField("Youtube Channel", "https://youtube.com/channel/UCKJEaaZMJQq6lH33L3b_sTg");
+            eb.AddField("Have any questions, or need my invite link?", "Support Server: https://discord.gg/85FDf272JE \nInvite Link: https://discord.com/api/oauth2/authorize?client_id=976792077868347412&permissions=8&scope=bot%20applications.commands");
             eb.WithThumbnailUrl(
-                "https://cdn.discordapp.com/emojis/968564817784877066.gif");
+                "https://media.discordapp.net/attachments/1016340658237227068/1078961966846070874/Ciynxwe.jpg");
             eb.WithOkColor();
             await e.SendMessageAsync(embed: eb.Build()).ConfigureAwait(false);
         });

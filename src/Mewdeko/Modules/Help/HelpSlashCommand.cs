@@ -128,7 +128,7 @@ public class HelpSlashCommand : MewdekoSlashModuleBase<HelpService>
                 .AddField(groups.Select(x => x.ElementAt(page).Key).FirstOrDefault(),
                     $"```css\n{string.Join("\n", transformed)}\n```")
                 .WithDescription(
-                    $"✅: You can use this command.\n❌: You cannot use this command.\n{config.Data.LoadingEmote}: If you need any help don't hesitate to join [The Support Server](https://discord.gg/mewdeko)\nDo `{prefix}h commandname` to see info on that command")
+                    $"✅: You can use this command.\n❌: You cannot use this command.\n{config.Data.LoadingEmote}: If you need any help don't hesitate to join [The Support Server](https://discord.gg/85FDf272JE)\nDo `{prefix}h commandname` to see info on that command")
                 .WithOkColor();
         }
     }
@@ -138,9 +138,9 @@ public class HelpSlashCommand : MewdekoSlashModuleBase<HelpService>
     {
         var eb = new EmbedBuilder()
             .AddField("Invite Link",
-                "[Click Here](https://discord.com/oauth2/authorize?client_id=752236274261426212&scope=bot&permissions=66186303&scope=bot%20applications.commands)")
-            .AddField("Website/Docs", "https://mewdeko.tech")
-            .AddField("Support Server", "https://discord.gg/mewdeko")
+                "[Click Here](https://discord.com/api/oauth2/authorize?client_id=976792077868347412&permissions=8&scope=bot%20applications.commands)")
+            .AddField("GitHub", "https://github.com/ClydETheDev/Copilot")
+            .AddField("Support Server", "https://discord.gg/85FDf272JE")
             .WithOkColor();
         await ctx.Interaction.RespondAsync(embed: eb.Build()).ConfigureAwait(false);
     }

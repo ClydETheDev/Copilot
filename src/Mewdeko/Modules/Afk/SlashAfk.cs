@@ -275,7 +275,7 @@ public class SlashAfk : MewdekoSlashModuleBase<AfkService>
         }
     }
 
-    [SlashCommand("type", "Sets how afk messages are removed. Do @Mewdeko help afktype to see more."),
+    [SlashCommand("type", "Sets how afk messages are removed. Do @Copilot help afktype to see more."),
      SlashUserPerm(GuildPermission.Administrator), CheckPermissions]
     public async Task AfkType(string ehm)
     {

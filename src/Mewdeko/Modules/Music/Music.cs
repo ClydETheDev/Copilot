@@ -745,11 +745,9 @@ public class Music : MewdekoModuleBase<MusicService>
                 (client.CurrentUser.Id == 752236274261426212 && searchQuery.Contains("youtu.be")))
             {
                 var eb = new EmbedBuilder().WithErrorColor()
-                    .WithTitle("YouTube support on Public Mewdeko has been disabled.")
+                    .WithTitle("YouTube support on Public Copilot has been disabled.")
                     .WithDescription(Format.Bold(
-                        "YouTube support has been disabled due to unfair unverification from Discord that is targetting smaller bots that use YouTube for music.\n\n This does not mean Mewdeko is going premium. You have options below."))
-                    .AddField("Donate for a Selfhost", Format.Bold("https://ko-fi.com/mewdeko"))
-                    .AddField("Host on yourself", Format.Bold("https://github.com/Pusheon/Mewdeko"))
+                        "YouTube support has been disabled due to unfair unverification from Discord that is targetting smaller bots that use YouTube for music.\n\n This does not mean Copilot is going premium."))
                     .AddField("More Info", Format.Bold("https://youtu.be/fOpEdS3JVYQ"))
                     .AddField("Support Server", Format.Bold(config.Data.SupportServer))
                     .Build();

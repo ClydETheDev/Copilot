@@ -544,7 +544,7 @@ public class ChatTriggers : MewdekoModuleBase<ChatTriggersService>
     {
         var errors = Service.GetAcctErrors(ctx.Guild?.Id);
         var eb = new EmbedBuilder();
-        var cb = new ComponentBuilder().WithButton("Support Server", style: ButtonStyle.Link, url: "https://discord.gg/Mewdeko",
+        var cb = new ComponentBuilder().WithButton("Support Server", style: ButtonStyle.Link, url: "https://discord.gg/85FDf272JE",
             emote: Emote.Parse("<:IconInvite:778931752835088426>"));
         if (errors?.Any() ?? false)
         {
