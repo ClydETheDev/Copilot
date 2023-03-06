@@ -60,9 +60,7 @@ acceptmessage:
   args:
     - embedcodehere
   desc: >-
-    Allows you to set the message sent when a suggestion is accepted. Use the
-    embed builder at https://eb.mewdeko.tech and the placeholders at
-    https://blog.mewdeko.tech/placeholders.
+    Allows you to set the message sent when a suggestion is accepted.
 aclist:
   args:
     - ''
